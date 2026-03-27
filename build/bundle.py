@@ -126,7 +126,10 @@ def bundle_notebook(config_dict: dict, root: str = ".", tf_install_code: str = "
 
     # Cell 3: Baked config
     cells.append(make_markdown_cell("## Configuration"))
-    cfg_code = f"import json\nCFG = {json.dumps(config_dict, indent=2, default=str)}\nprint(json.dumps(CFG, indent=2))"
+    # Use repr-style serialization so Python gets True/False/None instead of JSON true/false/null
+    cfg_json = json.dumps(config_dict, indent=2, default=str)
+    cfg_json = cfg_json.replace(": true", ": True").replace(": false", ": False").replace(": null", ": None")
+    cfg_code = f"import json\nCFG = {cfg_json}\nprint(json.dumps(CFG, indent=2, default=str))"
     cells.append(make_code_cell(cfg_code))
 
     # Module groups

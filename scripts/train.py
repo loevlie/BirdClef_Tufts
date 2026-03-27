@@ -52,6 +52,7 @@ def parse_args():
     p.add_argument("--run-name", default=None, help="Run name (defaults to timestamp)")
     p.add_argument("--notes", default=None, help="wandb experiment notes")
     p.add_argument("--tags", nargs="*", default=None, help="wandb tags")
+    p.add_argument("--ssl-weights", default=None, help="Path to SSL pretrained encoder (ssl_encoder.pt)")
     p.add_argument("--no-wandb", action="store_true", help="Disable wandb logging")
     return p.parse_args()
 
@@ -229,6 +230,22 @@ def main():
     model.init_prototypes_from_data(emb_flat_tensor, labels_flat_tensor)
     model.init_family_head(n_families, class_to_family)
     print(f"  ProtoSSM parameters: {model.count_parameters():,}")
+
+    # Transfer SSL pretrained weights if provided
+    if args.ssl_weights:
+        from src.training.ssl_pretrain import MaskedSSMEncoder, transfer_weights_to_proto_ssm
+        print(f"  Loading SSL weights from {args.ssl_weights}...")
+        ssl_model = MaskedSSMEncoder(
+            d_input=emb_full.shape[1],
+            d_model=ssm_cfg.get("d_model", 128),
+            d_state=ssm_cfg.get("d_state", 16),
+            n_ssm_layers=ssm_cfg.get("n_ssm_layers", 2),
+            n_sites=ssm_cfg.get("n_sites", 20),
+            meta_dim=ssm_cfg.get("meta_dim", 16),
+        )
+        ssl_model.load_state_dict(torch.load(args.ssl_weights, weights_only=True))
+        model = transfer_weights_to_proto_ssm(ssl_model, model)
+        del ssl_model
 
     model, train_history = train_proto_ssm_single(
         model,

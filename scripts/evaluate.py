@@ -287,7 +287,8 @@ def main():
     class_name_map = taxonomy.set_index("primary_label")["class_name"].to_dict()
     log_evaluation_diagnostics(
         best_blend, y_flat, PRIMARY_LABELS, class_name_map,
-        per_class_auc, weight_results, fold_aucs_proto, fold_alphas, fold_histories,
+        per_class_auc, weight_results, fold_aucs_proto,
+        fold_alphas=fold_alphas, fold_histories=fold_histories,
     )
 
     # ── 9. Save results ──────────────────────────────────────────────────

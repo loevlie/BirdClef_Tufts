@@ -67,6 +67,14 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # ── wandb tracking ────────────────────────────────────────────────
+    from src import tracking
+    tracking.init(
+        name="neuropt-search",
+        config=cfg_dict,
+        tags=["neuropt", "optimize"],
+    )
+
     # ── Validate data exists ─────────────────────────────────────────────
     for required in ["taxonomy.csv", "sample_submission.csv", "train_soundscapes_labels.csv"]:
         if not (data_dir / required).exists():

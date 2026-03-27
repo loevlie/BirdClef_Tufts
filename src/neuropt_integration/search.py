@@ -34,6 +34,10 @@ def run_neuropt_search(
         ml_context=ml_context,
     )
 
+    # Accumulate all evals for the growing table
+    param_names = sorted(search_space_cfg.keys())
+    all_evals = []
+
     # Save state + log to wandb after each eval
     orig_run = search._run_one
     eval_count = [0]
@@ -41,6 +45,7 @@ def run_neuropt_search(
     def _save_and_log(cfg):
         r = orig_run(cfg)
         eval_count[0] += 1
+        score = r.get("score", 0) if isinstance(r, dict) else 0
 
         # Save state JSON
         with open(state_path, "w") as f:
@@ -50,12 +55,23 @@ def run_neuropt_search(
                 "total": search.total_experiments,
             }, f, indent=2, default=str)
 
-        # Log to wandb live
-        score = r.get("score", 0) if isinstance(r, dict) else 0
-        log_data = {"neuropt/score": score, "neuropt/best_score": search.best_score}
-        for k, v in cfg.items():
-            log_data[f"neuropt/{k}"] = v
-        tracking.log(log_data, step=eval_count[0])
+        # Log scalar metrics (for time series charts)
+        tracking.log({
+            "neuropt/score": score,
+            "neuropt/best_score": search.best_score,
+        }, step=eval_count[0])
+
+        # Accumulate eval and log as table (for scatter/parallel coords)
+        all_evals.append({"score": score, **cfg})
+        try:
+            import wandb
+            if tracking._run is not None:
+                cols = ["score"] + param_names
+                rows = [[e.get(c) for c in cols] for e in all_evals]
+                table = wandb.Table(columns=cols, data=rows)
+                tracking.log({"neuropt/search_table": table})
+        except Exception:
+            pass
 
         return r
 

@@ -1,13 +1,49 @@
-"""GroupKFold OOF cross-validation and ensemble weight optimization for ProtoSSM."""
+"""OOF cross-validation and ensemble weight optimization for ProtoSSM."""
+
+from collections import defaultdict
 
 import numpy as np
 import torch
-from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import GroupKFold, StratifiedGroupKFold
 
 from src.constants import N_WINDOWS
 from src.models.proto_ssm import ProtoSSMv2
 from src.evaluation.metrics import macro_auc_skip_empty
 from .trainer import train_proto_ssm_single
+
+
+def site_stratified_kfold(n_files, file_groups, n_splits=5, seed=42):
+    """Split files into folds, distributing each site's files evenly across folds.
+
+    Unlike GroupKFold (which puts entire sites in one fold), this splits
+    files *within* each site across folds. This avoids the problem where
+    one dominant site (e.g. S22 with 39/59 files) creates wildly imbalanced folds.
+
+    Returns list of (train_idx, val_idx) tuples.
+    """
+    rng = np.random.default_rng(seed)
+
+    # Group file indices by site
+    site_to_files = defaultdict(list)
+    for i, g in enumerate(file_groups):
+        site_to_files[g].append(i)
+
+    # Assign each file to a fold, distributing each site evenly
+    fold_assignments = np.zeros(n_files, dtype=int)
+    for site, file_indices in site_to_files.items():
+        indices = np.array(file_indices)
+        rng.shuffle(indices)
+        for i, idx in enumerate(indices):
+            fold_assignments[idx] = i % n_splits
+
+    # Build train/val splits
+    splits = []
+    for fold in range(n_splits):
+        val_idx = np.where(fold_assignments == fold)[0]
+        train_idx = np.where(fold_assignments != fold)[0]
+        splits.append((train_idx, val_idx))
+
+    return splits
 
 
 def temporal_shift_tta(emb_files, logits_files, model, site_ids, hours, shifts=(0, 1, -1)):
@@ -94,14 +130,9 @@ def run_proto_ssm_oof(emb_files, logits_files, labels_files,
     fold_histories = []
     fold_alphas = []
 
-    n_unique_groups = len(set(file_groups))
-    if n_unique_groups < n_splits:
-        print(f"  WARNING: Only {n_unique_groups} groups, reducing n_splits from {n_splits} to {n_unique_groups}")
-        n_splits = n_unique_groups
-    gkf = GroupKFold(n_splits=n_splits)
-    dummy_y = np.zeros(n_files)
+    splits = site_stratified_kfold(n_files, file_groups, n_splits=n_splits)
 
-    for fold_i, (train_idx, val_idx) in enumerate(gkf.split(dummy_y, dummy_y, file_groups)):
+    for fold_i, (train_idx, val_idx) in enumerate(splits):
         if verbose:
             print(f"\n--- Fold {fold_i+1}/{n_splits} (train={len(train_idx)}, val={len(val_idx)}) ---")
 

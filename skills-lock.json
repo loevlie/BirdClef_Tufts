@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "kaggle": {
+      "source": "shepsci/kaggle-skill",
+      "sourceType": "github",
+      "computedHash": "70ab9e26f7cc0bb1e775e08a9c368de80eb603aa585e5f205530913cc35d4ec8"
+    }
+  }
+}

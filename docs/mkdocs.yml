@@ -1,0 +1,18 @@
+site_name: BirdCLEF 2026
+docs_dir: .
+site_dir: ../build/site
+theme:
+  name: material
+  palette:
+    primary: teal
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Pipeline: pipeline.md
+  - Usage:
+    - Configuration: config_reference.md
+    - neuropt Search: neuropt_guide.md
+    - Wall Timer: timer_guide.md
+    - Notebook Export: notebook_export.md
+  - Ideas: ideas.md
+  - Contributing: contributing.md

@@ -1,0 +1,7 @@
+-r requirements.txt
+pytest>=7.0
+mkdocs-material>=9.0
+nbformat>=5.9
+pyflakes>=3.0
+neuropt
+anthropic

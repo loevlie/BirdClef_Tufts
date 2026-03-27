@@ -1,0 +1,48 @@
+# Data & cache
+data/competition/
+cache/
+*.npz
+*.parquet
+*.ogg
+*.wav
+
+# Build output
+build/output/
+
+# Experiment artifacts (except configs)
+experiments/runs/*/model_*.pt
+experiments/runs/*/probes.pkl
+experiments/runs/*/*.npz
+experiments/runs/*/*.parquet
+experiments/runs/*/submission.csv
+
+# Training outputs
+outputs/
+
+# Secrets
+.env
+
+# Python env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Claude / agent skills
+.agents/
+.claude/
+build/site/

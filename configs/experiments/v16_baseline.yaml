@@ -1,0 +1,16 @@
+base: configs/base.yaml
+# Proven 0.925 LB config (original params, no neuropt)
+proto_ssm_train:
+  n_epochs: 60
+  lr: 1.35e-3
+  weight_decay: 1.15e-3
+  pos_weight_cap: 38.0
+  distill_weight: 0.175
+  label_smoothing: 0.0225
+  mixup_alpha: 0.265
+  focal_gamma: 2.25
+  swa_start_frac: 0.76
+temperature:
+  aves: 1.070
+  texture: 0.72
+tta_shifts: [0, 1, -1]

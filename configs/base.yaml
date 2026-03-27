@@ -1,0 +1,115 @@
+# BirdCLEF 2026 — default configuration
+# All parameters documented; override via experiment YAML files.
+
+mode: submit  # "submit" for Kaggle inference, "train" for local training
+
+# ─── Paths ───────────────────────────────────────────────────────────────────
+paths:
+  data_dir: /kaggle/input/competitions/birdclef-2026          # competition data
+  model_dir: /kaggle/input/models/google/bird-vocalization-classifier/tensorflow2/perch_v2_cpu/1  # Perch backbone
+  cache_dir: cache/                                            # local embedding cache
+  cache_input_dir: /kaggle/input/perch-meta                    # pre-computed cache dataset
+
+# ─── Pipeline control ────────────────────────────────────────────────────────
+pipeline:
+  batch_files: 32               # number of audio files per embedding batch
+  proxy_reduce: max             # reduction over proxy scores ("max" or "mean")
+  require_full_cache_in_submit: true   # fail fast if cache is incomplete at submit time
+  verbose: false                # extra logging
+  run_oof_baseline: false       # compute OOF baseline scores
+  run_probe_check: false        # sanity-check probe predictions
+  dryrun_n_files: 20            # files to process in dryrun / debug mode
+
+# ─── Proto-SSM architecture (LOCKED — do not tune) ──────────────────────────
+proto_ssm:
+  d_model: 128                  # hidden dimension
+  d_state: 16                   # SSM state size
+  n_ssm_layers: 2               # number of SSM layers
+  dropout: 0.15                 # dropout rate
+  n_prototypes: 1               # prototypes per class
+  n_sites: 20                   # site-embedding cardinality
+  meta_dim: 16                  # metadata embedding dim
+  use_cross_attn: true          # cross-attention between prototype and SSM
+  cross_attn_heads: 4           # heads for cross-attention
+
+# ─── Proto-SSM training (neuropt-tunable) ────────────────────────────────────
+proto_ssm_train:
+  n_epochs: 35                  # training epochs
+  lr: 5.5e-4                    # learning rate
+  weight_decay: 1.0e-3          # AdamW weight decay
+  val_ratio: 0.15               # fraction held out for validation
+  patience: 15                  # early-stopping patience (epochs)
+  pos_weight_cap: 41.0          # cap on positive class weight
+  distill_weight: 0.23          # weight for distillation loss term
+  proto_margin: 0.1             # prototype margin loss
+  label_smoothing: 0.019        # label smoothing factor
+  oof_n_splits: 3               # out-of-fold cross-validation splits
+  mixup_alpha: 0.25             # mixup interpolation alpha
+  focal_gamma: 1.15             # focal loss gamma
+  swa_start_frac: 0.68          # fraction of training before SWA kicks in
+  swa_lr: 5.0e-4                # SWA learning rate
+
+# ─── Score fusion ────────────────────────────────────────────────────────────
+fusion:
+  lambda_event: 0.4             # weight for event-level scores
+  lambda_texture: 1.0           # weight for texture-level scores
+  lambda_proxy_texture: 0.8     # weight for proxy-texture blend
+  smooth_texture: 0.35          # temporal smoothing for texture stream
+  smooth_event: 0.15            # temporal smoothing for event stream
+
+# ─── Residual SSM (secondary correction head) ────────────────────────────────
+residual_ssm:
+  d_model: 64                   # hidden dimension
+  d_state: 8                    # SSM state size
+  n_ssm_layers: 1               # number of SSM layers
+  dropout: 0.1                  # dropout rate
+  correction_weight: 0.3        # blend weight for residual correction
+  n_epochs: 20                  # training epochs
+  lr: 1.0e-3                    # learning rate
+  patience: 8                   # early-stopping patience
+
+# ─── Temperature scaling ─────────────────────────────────────────────────────
+temperature:
+  aves: 1.10                    # temperature for aves backbone logits
+  texture: 0.95                 # temperature for texture stream logits
+
+# ─── Inference ───────────────────────────────────────────────────────────────
+file_level_top_k: 2             # keep top-k species per file
+tta_shifts: [0]                 # test-time augmentation shifts (seconds)
+
+# ─── Probe (linear / MLP fallback classifier) ────────────────────────────────
+probe:
+  backend: mlp                  # "mlp" or "logistic"
+  pca_dim: 64                   # PCA dimension for probe input
+  min_pos: 8                    # minimum positive examples to train probe
+  C: 0.50                       # regularisation strength (logistic)
+  alpha: 0.40                   # probe blend weight
+  mlp:
+    hidden_layer_sizes: [128]   # MLP hidden layers
+    activation: relu            # activation function
+    max_iter: 100               # max training iterations
+    early_stopping: true        # enable early stopping
+    validation_fraction: 0.15   # validation split for early stopping
+    n_iter_no_change: 10        # patience for early stopping
+    learning_rate_init: 0.001   # initial learning rate
+    l2_alpha: 0.01              # L2 regularisation
+
+# ─── Timer / budget ─────────────────────────────────────────────────────────
+timer:
+  budget_seconds: 5400.0              # 90 min Kaggle wall-clock limit
+  residual_ssm_min_remaining: 240.0   # skip residual SSM if less time remains
+
+# ─── neuropt search configuration ────────────────────────────────────────────
+neuropt:
+  search_space:
+    lr:               {type: log_uniform, low: 5.0e-4, high: 3.0e-3}
+    weight_decay:     {type: log_uniform, low: 8.0e-4, high: 5.0e-3}
+    distill_weight:   {type: uniform, low: 0.05, high: 0.25}
+    label_smoothing:  {type: uniform, low: 0.01, high: 0.05}
+    mixup_alpha:      {type: uniform, low: 0.1, high: 0.45}
+    focal_gamma:      {type: uniform, low: 1.0, high: 3.0}
+    swa_start_frac:   {type: uniform, low: 0.6, high: 0.85}
+    pos_weight_cap:   {type: uniform, low: 20.0, high: 45.0}
+  batch_size: 3                 # parallel evaluations per neuropt round
+  max_evals: 60                 # maximum total evaluations
+  backend: claude               # neuropt backend ("claude")

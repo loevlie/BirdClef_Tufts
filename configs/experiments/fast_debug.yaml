@@ -1,0 +1,12 @@
+base: configs/base.yaml
+# Quick debug: 2 epochs, small data
+mode: train
+proto_ssm_train:
+  n_epochs: 2
+  oof_n_splits: 2
+pipeline:
+  batch_files: 4
+  verbose: true
+  dryrun_n_files: 5
+timer:
+  budget_seconds: 120.0

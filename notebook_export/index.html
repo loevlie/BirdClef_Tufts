@@ -506,6 +506,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#uploading-to-kaggle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uploading to Kaggle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-the-bundler-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -707,6 +718,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#uploading-to-kaggle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uploading to Kaggle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-the-bundler-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -808,6 +830,53 @@ uv run python scripts/export_notebook.py \
 </tr>
 </tbody>
 </table>
+<h2 id="uploading-to-kaggle">Uploading to Kaggle</h2>
+<p>After exporting, go to Kaggle → New Notebook → File → Upload Notebook → select <code>build/output/submission.ipynb</code>.</p>
+<p>Then add these <strong>required inputs</strong> via the "Add Input" sidebar:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>What to search</th>
+<th>What to select</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Competition</td>
+<td><code>birdclef-2026</code></td>
+<td>BirdCLEF+ 2026</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>google/bird-vocalization-classifier</code></td>
+<td><strong>Perch</strong> by Google → tensorflow2 / perch_v2_cpu / V1</td>
+</tr>
+<tr>
+<td>Notebook</td>
+<td><code>tf-wheels ashok205</code></td>
+<td><strong>tf_wheels</strong> (1 upvote, by ashok205)</td>
+</tr>
+</tbody>
+</table>
+<p>Optional (saves ~5 min by skipping Perch inference on train data):</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>What to search</th>
+<th>What to select</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Notebook</td>
+<td>Your previous run</td>
+<td>Any notebook output with <code>perch_cache/</code> files</td>
+</tr>
+</tbody>
+</table>
+<p>Then set <strong>Internet → Off</strong>, <strong>Accelerator → None (CPU)</strong>, and submit.</p>
 <h2 id="how-the-bundler-works">How the Bundler Works</h2>
 <ol>
 <li><strong>TF install cell</strong> -- pip installs TF 2.20 wheels from a Kaggle dataset (needed for Perch v2)</li>

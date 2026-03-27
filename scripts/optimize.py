@@ -116,12 +116,12 @@ def main():
 
     # ── 3. Define neuropt training function ──────────────────────────────
     import torch
-    from sklearn.model_selection import GroupKFold
+    from src.training.oof import site_stratified_kfold
 
     n_splits_cv = 3
 
     def neuropt_train_fn(config):
-        """3-fold GroupKFold CV for neuropt evaluation."""
+        """3-fold site-stratified CV for neuropt evaluation."""
         try:
             _cfg = copy.deepcopy(cfg_dict)
             t = _cfg.get("proto_ssm_train", {})
@@ -132,14 +132,12 @@ def main():
 
             _a = ssm_cfg  # architecture LOCKED
 
-            gkf = GroupKFold(n_splits=n_splits_cv)
+            splits = site_stratified_kfold(len(file_list), file_groups, n_splits=n_splits_cv)
             fold_aucs = []
             all_train_losses = []
             all_val_losses = []
 
-            for fold, (ti, vi) in enumerate(
-                gkf.split(np.arange(len(file_list)), groups=file_groups)
-            ):
+            for fold, (ti, vi) in enumerate(splits):
                 _m = ProtoSSMv2(
                     d_input=1536,
                     d_model=_a.get("d_model", 128),

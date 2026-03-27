@@ -1,7 +1,8 @@
 """neuropt hyperparameter search wrapper for BirdCLEF 2026."""
 import json
-import time
 from pathlib import Path
+
+from src import tracking
 
 
 def run_neuropt_search(
@@ -11,7 +12,7 @@ def run_neuropt_search(
     output_dir: str | Path,
     ml_context: str = "",
 ):
-    """Run neuropt ArchSearch and save results."""
+    """Run neuropt ArchSearch and save results. Logs each eval to wandb live."""
     from neuropt import ArchSearch
     from .spaces import build_search_space
 
@@ -33,18 +34,32 @@ def run_neuropt_search(
         ml_context=ml_context,
     )
 
-    # Save state after each eval
+    # Save state + log to wandb after each eval
     orig_run = search._run_one
-    def _save_and_run(cfg):
+    eval_count = [0]
+
+    def _save_and_log(cfg):
         r = orig_run(cfg)
+        eval_count[0] += 1
+
+        # Save state JSON
         with open(state_path, "w") as f:
             json.dump({
                 "best_score": search.best_score,
                 "best_config": search.best_config,
                 "total": search.total_experiments,
             }, f, indent=2, default=str)
+
+        # Log to wandb live
+        score = r.get("score", 0) if isinstance(r, dict) else 0
+        log_data = {"neuropt/score": score, "neuropt/best_score": search.best_score}
+        for k, v in cfg.items():
+            log_data[f"neuropt/{k}"] = v
+        tracking.log(log_data, step=eval_count[0])
+
         return r
-    search._run_one = _save_and_run
+
+    search._run_one = _save_and_log
 
     max_evals = neuropt_cfg.get("max_evals", 60)
     search.run(max_evals=max_evals, resume=True)

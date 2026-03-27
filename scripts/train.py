@@ -615,6 +615,16 @@ def main():
     timer.stage_end()
 
     # ── Summary ──────────────────────────────────────────────────────────
+    baselines_path = Path(__file__).parent.parent / "configs" / "baselines.yaml"
+    if baselines_path.exists():
+        import yaml
+        with open(baselines_path) as f:
+            baselines = yaml.safe_load(f)
+        best_lb = baselines.get("best_public_lb")
+        if best_lb is not None and baseline_oof_auc is not None:
+            delta = baseline_oof_auc - best_lb
+            arrow = "+" if delta >= 0 else ""
+            print(f"\n  OOF AUC: {baseline_oof_auc:.4f}  vs best public LB ({best_lb:.3f}): {arrow}{delta:.4f}")
     timer.print_report()
 
     logs = {

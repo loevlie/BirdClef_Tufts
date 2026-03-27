@@ -1,0 +1,17 @@
+# Known baseline scores to compare against
+# Update this when you get a new best Kaggle submission
+
+best_public_lb: 0.925
+best_config: configs/experiments/v16_baseline.yaml
+best_oof_auc: null  # fill in after running evaluate with v16_baseline
+
+history:
+  - score: 0.925
+    config: v16_baseline (d_model=128, n_layers=2, original params)
+    date: 2026-03-26
+  - score: 0.920
+    config: v26_timeopt (neuropt-tuned training params)
+    date: 2026-03-26
+  - score: 0.911
+    config: v5_clean (d_model=256, n_layers=3, neuropt params)
+    date: 2026-03-25

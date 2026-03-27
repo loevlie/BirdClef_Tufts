@@ -292,6 +292,15 @@ def main():
 
     print(f"\n[eval] Results saved to {results_path}")
 
+    # ── Baseline comparison ─────────────────────────────────────────────
+    baselines_path = Path(__file__).parent.parent / "configs" / "baselines.yaml"
+    best_lb = None
+    if baselines_path.exists():
+        import yaml
+        with open(baselines_path) as f:
+            baselines = yaml.safe_load(f)
+        best_lb = baselines.get("best_public_lb")
+
     # ── Summary ──────────────────────────────────────────────────────────
     print("\n" + "=" * 60)
     print("  EVALUATION SUMMARY")
@@ -301,6 +310,10 @@ def main():
     print(f"  ProtoSSM OOF:               {overall_oof_auc_proto:.4f}")
     print(f"  MLP probe OOF:              {mlp_only_auc:.4f}")
     print(f"  Best ensemble OOF:          {best_auc:.4f}  (w={best_w:.2f})")
+    if best_lb is not None:
+        delta = best_auc - best_lb
+        arrow = "+" if delta >= 0 else ""
+        print(f"  vs best public LB ({best_lb:.3f}): {arrow}{delta:.4f}")
     print("=" * 60)
 
     timer.print_report()

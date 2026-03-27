@@ -307,6 +307,18 @@ def main():
     print(f"[optimize] State saved to {results['state_path']}")
     print(f"[optimize] Search log at {results['log_path']}")
 
+    # Compare against known best public LB
+    baselines_path = Path(__file__).parent.parent / "configs" / "baselines.yaml"
+    if baselines_path.exists():
+        import yaml
+        with open(baselines_path) as f:
+            baselines = yaml.safe_load(f)
+        best_lb = baselines.get("best_public_lb")
+        if best_lb is not None:
+            delta = best_score - best_lb
+            arrow = "+" if delta >= 0 else ""
+            print(f"\n[optimize] vs best public LB ({best_lb:.3f}): {arrow}{delta:.4f}")
+
     # Apply if it beat baseline
     if improvement > 0.001:
         from src.neuropt_integration.config_apply import apply_neuropt_config

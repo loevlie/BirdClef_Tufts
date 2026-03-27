@@ -39,6 +39,10 @@ def parse_args():
     p.add_argument("--cache-dir", default=None, help="Override paths.cache_dir")
     p.add_argument("--n-splits", type=int, default=None, help="Override oof_n_splits")
     p.add_argument("--output-dir", default="outputs/eval", help="Directory for results")
+    p.add_argument("--name", default=None, help="wandb run name")
+    p.add_argument("--notes", default=None, help="wandb experiment notes")
+    p.add_argument("--tags", nargs="*", default=None, help="wandb tags")
+    p.add_argument("--no-wandb", action="store_true", help="Disable wandb logging")
     return p.parse_args()
 
 
@@ -57,6 +61,18 @@ def main():
     cache_input_dir = Path(cfg.paths.cache_input_dir)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # ── wandb tracking ────────────────────────────────────────────────
+    import os
+    if args.no_wandb:
+        os.environ["WANDB_MODE"] = "disabled"
+    from src import tracking
+    tracking.init(
+        name=args.name or f"eval-{Path(args.config).stem}",
+        config=cfg_dict,
+        tags=args.tags or ["evaluate"],
+        notes=args.notes,
+    )
 
     # ── Validate data exists ─────────────────────────────────────────────
     for required in ["taxonomy.csv", "sample_submission.csv", "train_soundscapes_labels.csv"]:
@@ -315,6 +331,19 @@ def main():
         arrow = "+" if delta >= 0 else ""
         print(f"  vs best public LB ({best_lb:.3f}): {arrow}{delta:.4f}")
     print("=" * 60)
+
+    # Log to wandb
+    tracking.log_summary({
+        "raw_auc": raw_auc,
+        "oof_baseline_auc": baseline_oof_auc,
+        "proto_ssm_oof_auc": overall_oof_auc_proto,
+        "mlp_probe_oof_auc": mlp_only_auc,
+        "best_ensemble_auc": best_auc,
+        "best_ensemble_weight": best_w,
+        "n_splits": train_cfg.get("oof_n_splits", 3),
+        "n_files": len(file_list),
+    })
+    tracking.finish()
 
     timer.print_report()
 

@@ -7,6 +7,7 @@ If test soundscapes exist, also runs inference and writes submission.csv.
 import argparse
 import gc
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -49,6 +50,9 @@ def parse_args():
     p.add_argument("--cache-dir", default=None, help="Override paths.cache_dir")
     p.add_argument("--output-dir", default="outputs", help="Directory for saved models and logs")
     p.add_argument("--run-name", default=None, help="Run name (defaults to timestamp)")
+    p.add_argument("--notes", default=None, help="wandb experiment notes")
+    p.add_argument("--tags", nargs="*", default=None, help="wandb tags")
+    p.add_argument("--no-wandb", action="store_true", help="Disable wandb logging")
     return p.parse_args()
 
 
@@ -75,6 +79,17 @@ def main():
     with open(run_dir / "config_snapshot.json", "w") as f:
         json.dump(cfg_dict, f, indent=2, default=str)
     print(f"[train] Run directory: {run_dir}")
+
+    # ── wandb tracking (optional) ─────────────────────────────────────
+    if args.no_wandb:
+        os.environ["WANDB_MODE"] = "disabled"
+    from src import tracking
+    tracking.init(
+        name=run_name,
+        config=cfg_dict,
+        tags=args.tags or ["train"],
+        notes=args.notes,
+    )
 
     # ── Validate data exists ─────────────────────────────────────────────
     for required in ["taxonomy.csv", "sample_submission.csv", "train_soundscapes_labels.csv"]:
@@ -223,6 +238,14 @@ def main():
         cfg=train_cfg, verbose=True,
     )
     timer.stage_end()
+
+    # Log training curves
+    for epoch_i, (tl, vl) in enumerate(zip(
+        train_history.get("train_loss", []),
+        train_history.get("val_loss", []),
+    )):
+        tracking.log({"train/loss": tl, "train/val_loss": vl}, step=epoch_i)
+    tracking.log({"train/best_val_loss": min(train_history.get("val_loss", [float("inf")]))})
 
     # ── 11. Train MLP probes ─────────────────────────────────────────────
     timer.stage_start("mlp_probes")
@@ -637,6 +660,17 @@ def main():
     }
     with open(run_dir / "train_log.json", "w") as f:
         json.dump(logs, f, indent=2, default=str)
+
+    # Log final summary to wandb
+    tracking.log_summary({
+        "oof_baseline_auc": baseline_oof_auc,
+        "n_probe_models": len(probe_models),
+        "n_files": len(file_list),
+        "residual_ssm_trained": res_model is not None,
+        "wall_time_seconds": timer.elapsed(),
+    })
+    tracking.finish()
+
     print(f"[train] Done. Logs at {run_dir / 'train_log.json'}")
 
 

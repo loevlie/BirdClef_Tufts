@@ -13,6 +13,7 @@ Competition discussions, notebooks, and resources worth tracking.
 | Link | What | Score |
 |------|------|-------|
 | [ProtoSSM v5 Maximum Ensemble](https://www.kaggle.com/code/yaroslavkholmirzayev/birdclef-2026-protossm-v5-maximum-ensemble) | Similar approach to ours (Perch + ProtoSSM). Our pipeline is based on this. | 0.925 public LB |
+| [Pantanal Distill BirdCLEF2026 Improvement](https://www.kaggle.com/code/pradeeshrajan/pantanal-distill-birdclef2026-improvement) | Knowledge distillation approach for BirdCLEF | — |
 
 ## Datasets
 

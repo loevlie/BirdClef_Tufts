@@ -6,11 +6,27 @@ _WALL_START = time.time()
 
 # --- Paths ---
 from pathlib import Path
+import glob
 BASE = Path("/kaggle/input/competitions/birdclef-2026")
 MODEL_DIR = Path("/kaggle/input/models/google/bird-vocalization-classifier/tensorflow2/perch_v2_cpu/1")
-CACHE_INPUT_DIR = Path("/kaggle/input/perch-meta")
 CACHE_WORK_DIR = Path("/kaggle/working/perch_cache")
 CACHE_WORK_DIR.mkdir(parents=True, exist_ok=True)
+
+# Auto-discover cache from any attached input (dataset or notebook output)
+CACHE_INPUT_DIR = None
+for candidate in [
+    Path("/kaggle/input/perch-meta"),
+    *[Path(p).parent for p in glob.glob("/kaggle/input/*/full_perch_arrays.npz")],
+    *[Path(p).parent for p in glob.glob("/kaggle/input/*/*/perch_cache/full_perch_arrays.npz")],
+    *[Path(p).parent for p in glob.glob("/kaggle/input/*/perch_cache/full_perch_arrays.npz")],
+]:
+    if (candidate / "full_perch_arrays.npz").exists() and (candidate / "full_perch_meta.parquet").exists():
+        CACHE_INPUT_DIR = candidate
+        print(f"Found Perch cache at: {CACHE_INPUT_DIR}")
+        break
+if CACHE_INPUT_DIR is None:
+    CACHE_INPUT_DIR = Path("/kaggle/input/perch-meta")  # fallback
+    print("No pre-computed Perch cache found — will compute from scratch.")
 
 import tensorflow as tf
 tf.get_logger().setLevel("ERROR")

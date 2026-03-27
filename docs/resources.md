@@ -10,7 +10,9 @@ Competition discussions, notebooks, and resources worth tracking.
 
 ## Notebooks
 
-_Add useful public notebooks here as you find them._
+| Link | What | Score |
+|------|------|-------|
+| [ProtoSSM v5 Maximum Ensemble](https://www.kaggle.com/code/yaroslavkholmirzayev/birdclef-2026-protossm-v5-maximum-ensemble) | Similar approach to ours (Perch + ProtoSSM). Our pipeline is based on this. | 0.925 public LB |
 
 ## Datasets
 

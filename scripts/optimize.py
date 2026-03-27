@@ -317,6 +317,38 @@ def main():
             arrow = "+" if delta >= 0 else ""
             print(f"\n[optimize] vs best OOF baseline ({best_lb:.3f}): {arrow}{delta:.4f}")
 
+    # Log search results to wandb (hyperparameter landscape)
+    try:
+        import wandb
+        if tracking._run is not None:
+            log_path = Path(results["log_path"])
+            if log_path.exists():
+                rows = []
+                for line in log_path.read_text().strip().split("\n"):
+                    try:
+                        entry = json.loads(line)
+                        cfg = entry.get("config", {})
+                        score = entry.get("result", {}).get("score", 0)
+                        row = {**cfg, "score": score}
+                        rows.append(row)
+                    except Exception:
+                        pass
+                if rows:
+                    cols = list(rows[0].keys())
+                    table = wandb.Table(columns=cols, data=[[r.get(c) for c in cols] for r in rows])
+                    tracking.log({"search_results": table})
+
+            tracking.log_summary({
+                "baseline_score": baseline_score,
+                "best_score": best_score,
+                "improvement": improvement,
+                "total_evals": results["total"],
+                "best_config": best_config,
+            })
+            print(f"  Logged {results['total']} evals to wandb")
+    except Exception as e:
+        print(f"  wandb logging error (non-fatal): {e}")
+
     # Apply if it beat baseline
     if improvement > 0.001:
         from src.neuropt_integration.config_apply import apply_neuropt_config

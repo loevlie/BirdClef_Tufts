@@ -7,6 +7,7 @@
 ```bash
 git clone git@github.com:loevlie/BirdClef_Tufts.git && cd BirdClef_Tufts
 uv sync                                              # reproducible env
+source .venv/bin/activate                            # activate the environment uv created
 kaggle competitions download -c birdclef-2026        # download data
 unzip birdclef-2026.zip -d data/competition
 ```

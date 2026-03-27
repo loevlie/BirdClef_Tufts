@@ -16,6 +16,7 @@ dependencies = [
     "pyarrow>=23.0.1",
     "wandb>=0.25.1",
     "anthropic>=0.86.0",
+    "kaggle",
 ]
 
 [project.optional-dependencies]

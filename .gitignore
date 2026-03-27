@@ -5,6 +5,7 @@ cache/
 *.parquet
 *.ogg
 *.wav
+uv.lock
 
 # Build output
 build/output/

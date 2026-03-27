@@ -127,6 +127,7 @@ name = "birdclef2026"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "anthropic" },
     { name = "kagglehub" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -166,6 +167,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "anthropic", specifier = ">=0.86.0" },
     { name = "anthropic", marker = "extra == 'neuropt'" },
     { name = "kagglehub", specifier = ">=1.0.0" },
     { name = "mkdocs-material", marker = "extra == 'dev'", specifier = ">=9.0" },

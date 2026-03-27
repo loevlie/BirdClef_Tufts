@@ -315,7 +315,7 @@ def main():
         import yaml
         with open(baselines_path) as f:
             baselines = yaml.safe_load(f)
-        best_lb = baselines.get("best_public_lb")
+        best_lb = baselines.get("best_oof_auc") or baselines.get("best_public_lb")
 
     # ── Summary ──────────────────────────────────────────────────────────
     print("\n" + "=" * 60)
@@ -329,7 +329,7 @@ def main():
     if best_lb is not None:
         delta = best_auc - best_lb
         arrow = "+" if delta >= 0 else ""
-        print(f"  vs best public LB ({best_lb:.3f}): {arrow}{delta:.4f}")
+        print(f"  vs best OOF baseline ({best_lb:.3f}): {arrow}{delta:.4f}")
     print("=" * 60)
 
     # Log to wandb

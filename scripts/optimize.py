@@ -311,11 +311,11 @@ def main():
         import yaml
         with open(baselines_path) as f:
             baselines = yaml.safe_load(f)
-        best_lb = baselines.get("best_public_lb")
+        best_lb = baselines.get("best_oof_auc") or baselines.get("best_public_lb")
         if best_lb is not None:
             delta = best_score - best_lb
             arrow = "+" if delta >= 0 else ""
-            print(f"\n[optimize] vs best public LB ({best_lb:.3f}): {arrow}{delta:.4f}")
+            print(f"\n[optimize] vs best OOF baseline ({best_lb:.3f}): {arrow}{delta:.4f}")
 
     # Apply if it beat baseline
     if improvement > 0.001:

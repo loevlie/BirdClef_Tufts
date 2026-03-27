@@ -5,6 +5,9 @@ theme:
   name: material
   palette:
     primary: teal
+  icon:
+    logo: material/bird
+  favicon: https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f426.png
 nav:
   - Home: index.md
   - Architecture: architecture.md

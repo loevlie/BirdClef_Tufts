@@ -28,9 +28,12 @@ def _load_raw(path: str) -> Dict[str, Any]:
 
     base_path = raw.pop("base", None)
     if base_path is not None:
-        # Resolve relative paths against the directory of the current file.
         if not os.path.isabs(base_path):
-            base_path = os.path.join(os.path.dirname(path), base_path)
+            # Try relative to current file first, then relative to cwd
+            candidate = os.path.join(os.path.dirname(path), base_path)
+            if os.path.exists(candidate):
+                base_path = candidate
+            # else: keep as-is (relative to cwd)
         base_raw = _load_raw(base_path)
         raw = _deep_merge(base_raw, raw)
 

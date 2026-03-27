@@ -3,7 +3,7 @@
 
 best_public_lb: 0.925
 best_config: configs/experiments/v16_baseline.yaml
-best_oof_auc: null  # fill in after running evaluate with v16_baseline
+best_oof_auc: 0.8598  # v16_baseline, stratified 3-fold, 2026-03-27
 
 history:
   - score: 0.925

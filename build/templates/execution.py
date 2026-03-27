@@ -26,7 +26,7 @@ for candidate in [
         break
 if CACHE_INPUT_DIR is None:
     CACHE_INPUT_DIR = Path("/kaggle/input/perch-meta")  # fallback
-    print("No pre-computed Perch cache found — will compute from scratch.")
+    print("No pre-computed Perch cache found -- will compute from scratch.")
 
 import tensorflow as tf
 tf.get_logger().setLevel("ERROR")

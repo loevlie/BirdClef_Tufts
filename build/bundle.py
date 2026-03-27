@@ -36,6 +36,9 @@ MODULE_GROUPS = [
         "src/inference/perch.py",
         "src/inference/tta.py",
     ]),
+    ("Pipeline", [
+        "src/pipeline.py",
+    ]),
     ("Scoring", [
         "src/scoring/priors.py",
         "src/scoring/fusion.py",
@@ -135,6 +138,12 @@ def bundle_notebook(config_dict: dict, root: str = ".", tf_install_code: str = "
             if code.strip():
                 group_code.append(f"# --- {Path(mod).stem} ---\n{code}")
         cells.append(make_code_cell("\n\n".join(group_code)))
+
+    # Execution cells (the actual pipeline)
+    exec_path = Path(root) / "build" / "templates" / "execution.py"
+    if exec_path.exists():
+        cells.append(make_markdown_cell("## Execute Pipeline"))
+        cells.append(make_code_cell(exec_path.read_text()))
 
     # Build notebook structure
     nb = {

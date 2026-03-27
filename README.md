@@ -8,6 +8,7 @@
 git clone git@github.com:loevlie/BirdClef_Tufts.git && cd BirdClef_Tufts
 uv sync                                              # reproducible env
 kaggle competitions download -c birdclef-2026        # download data
+source .venv/bin/activate
 unzip birdclef-2026.zip -d data/competition
 ```
 

@@ -20,6 +20,26 @@ Output lands in `build/output/submission.ipynb` by default. Use `-o` to override
 | `--neuropt-state` | `None` | Path to `neuropt_state.json` to bake in best params |
 | `-o` / `--output` | `build/output/submission.ipynb` | Output notebook path |
 
+## Uploading to Kaggle
+
+After exporting, go to Kaggle → New Notebook → File → Upload Notebook → select `build/output/submission.ipynb`.
+
+Then add these **required inputs** via the "Add Input" sidebar:
+
+| Type | What to search | What to select |
+|------|---------------|----------------|
+| Competition | `birdclef-2026` | BirdCLEF+ 2026 |
+| Model | `google/bird-vocalization-classifier` | **Perch** by Google → tensorflow2 / perch_v2_cpu / V1 |
+| Notebook | `tf-wheels ashok205` | **tf_wheels** (1 upvote, by ashok205) |
+
+Optional (saves ~5 min by skipping Perch inference on train data):
+
+| Type | What to search | What to select |
+|------|---------------|----------------|
+| Notebook | Your previous run | Any notebook output with `perch_cache/` files |
+
+Then set **Internet → Off**, **Accelerator → None (CPU)**, and submit.
+
 ## How the Bundler Works
 
 1. **TF install cell** -- pip installs TF 2.20 wheels from a Kaggle dataset (needed for Perch v2)

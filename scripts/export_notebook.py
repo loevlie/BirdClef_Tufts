@@ -9,9 +9,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from build.bundle import bundle_notebook, validate_notebook
 
-TF_INSTALL = '''# Install TF 2.20 (required for Perch v2)
-!pip install -q --no-deps /kaggle/input/notebooks/ashok205/tf-wheels/tf_wheels/tensorboard-2.20.0-py3-none-any.whl
-!pip install -q --no-deps /kaggle/input/notebooks/ashok205/tf-wheels/tf_wheels/tensorflow-2.20.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+TF_INSTALL = '''# Install TF 2.20 (required for Perch v2 StableHLO compatibility)
+import os
+_whl_dir = "/kaggle/input/notebooks/ashok205/tf-wheels/tf_wheels"
+if os.path.exists(_whl_dir):
+    !pip install -q --no-deps {_whl_dir}/tensorboard-2.20.0-py3-none-any.whl
+    !pip install -q --no-deps {_whl_dir}/tensorflow-2.20.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+else:
+    print("TF wheels not found, using pre-installed TensorFlow")
 '''
 
 

@@ -271,6 +271,25 @@ def main():
         print(f"    w={w:.2f}: AUC={auc:.4f}{marker}")
     timer.stage_end()
 
+    # ── 8b. wandb diagnostics ────────────────────────────────────────────
+    from sklearn.metrics import roc_auc_score
+    from src.tracking_plots import log_evaluation_diagnostics
+
+    per_class_auc = {}
+    best_blend = best_w * oof_proto_flat + (1.0 - best_w) * oof_mlp_flat
+    for ci in range(N_CLASSES):
+        if y_flat[:, ci].sum() > 0 and y_flat[:, ci].sum() < len(y_flat):
+            try:
+                per_class_auc[PRIMARY_LABELS[ci]] = roc_auc_score(y_flat[:, ci], best_blend[:, ci])
+            except Exception:
+                pass
+
+    class_name_map = taxonomy.set_index("primary_label")["class_name"].to_dict()
+    log_evaluation_diagnostics(
+        best_blend, y_flat, PRIMARY_LABELS, class_name_map,
+        per_class_auc, weight_results, fold_aucs_proto, fold_alphas, fold_histories,
+    )
+
     # ── 9. Save results ──────────────────────────────────────────────────
     results = {
         "baseline": {

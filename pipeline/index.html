@@ -1,0 +1,1209 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../architecture/">
+      
+      
+        <link rel="next" href="../config_reference/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Pipeline - BirdCLEF 2026</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#pipeline-stages" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="BirdCLEF 2026" class="md-header__button md-logo" aria-label="BirdCLEF 2026" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            BirdCLEF 2026
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Pipeline
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="BirdCLEF 2026" class="md-nav__button md-logo" aria-label="BirdCLEF 2026" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    BirdCLEF 2026
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-load-competition-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Load Competition Data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-prepare-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Prepare Labels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-build-perch-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Build Perch Mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-load-or-compute-perch-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Load or Compute Perch Cache
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-align-truth-to-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Align Truth to Cache
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-oof-meta-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. OOF Meta-Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-protossm-training" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. ProtoSSM Training
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-protossm-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. ProtoSSM Inference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-mlp-probes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. MLP Probes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-residual-ssm-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Residual SSM (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-score-fusion-and-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Score Fusion and Calibration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-submission" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Submission
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#class-temperature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Class Temperature
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../neuropt_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    neuropt Search
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../timer_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wall Timer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebook_export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notebook Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ideas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ideas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-load-competition-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Load Competition Data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-prepare-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Prepare Labels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-build-perch-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Build Perch Mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-load-or-compute-perch-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Load or Compute Perch Cache
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-align-truth-to-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Align Truth to Cache
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-oof-meta-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. OOF Meta-Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-protossm-training" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. ProtoSSM Training
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-protossm-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. ProtoSSM Inference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-mlp-probes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. MLP Probes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-residual-ssm-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Residual SSM (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-score-fusion-and-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Score Fusion and Calibration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-submission" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Submission
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#class-temperature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Class Temperature
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="pipeline-stages">Pipeline Stages</h1>
+<p>The pipeline runs as a sequential chain of stages. In submit mode, all stages execute within a 540s wall-clock budget managed by <code>WallTimer</code>. In train mode, there is no budget constraint.</p>
+<pre><code>Competition CSVs --&gt; Labels --&gt; Perch Cache --&gt; ProtoSSM Train --&gt; Inference --&gt; Probes --&gt; Fusion --&gt; Submission CSV
+</code></pre>
+<h2 id="1-load-competition-data">1. Load Competition Data</h2>
+<p><strong>Function:</strong> <code>pipeline.load_competition_data(data_dir)</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td><code>taxonomy.csv</code>, <code>sample_submission.csv</code>, <code>train_soundscapes_labels.csv</code></td>
+</tr>
+<tr>
+<td>Output</td>
+<td><code>taxonomy</code> DataFrame, <code>PRIMARY_LABELS</code> list (234 species), <code>N_CLASSES</code> int</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-prepare-labels">2. Prepare Labels</h2>
+<p><strong>Function:</strong> <code>pipeline.prepare_labels(soundscape_labels, PRIMARY_LABELS)</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>Soundscape labels DataFrame, primary label list</td>
+</tr>
+<tr>
+<td>Output</td>
+<td>Deduplicated <code>sc_clean</code> DataFrame, multi-hot <code>Y_SC</code> array <code>(N_rows, 234)</code>, list of fully-labeled files (all 12 windows present)</td>
+</tr>
+</tbody>
+</table>
+<p>Parses filenames to extract site/hour metadata. Identifies fully-labeled files (exactly 12 windows) for training.</p>
+<h2 id="3-build-perch-mapping">3. Build Perch Mapping</h2>
+<p><strong>Function:</strong> <code>pipeline.build_perch_mapping(taxonomy, model_dir, PRIMARY_LABELS, Y_SC, label_to_idx)</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>Taxonomy, Perch model directory, label arrays</td>
+</tr>
+<tr>
+<td>Output</td>
+<td><code>BC_INDICES</code> mapping array, <code>MAPPED_MASK</code>, genus proxy mappings, <code>fuse_kwargs</code> dict, class index groups (active/inactive, texture/event, mapped/unmapped)</td>
+</tr>
+</tbody>
+</table>
+<p>Maps competition species to Perch's BirdClassifier label space. Species without a direct match get genus-level proxy mappings. Classes are partitioned into groups (mapped/unmapped, texture/event, active/inactive) that drive downstream fusion logic.</p>
+<h2 id="4-load-or-compute-perch-cache">4. Load or Compute Perch Cache</h2>
+<p><strong>Function:</strong> <code>pipeline.load_or_compute_cache(...)</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>Fully-labeled file list, mapping dict, optional <code>infer_fn</code></td>
+</tr>
+<tr>
+<td>Output</td>
+<td><code>meta_full</code> DataFrame, <code>scores_full_raw</code> array, <code>emb_full</code> array <code>(N_files*12, 1536)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Checks for cached <code>.parquet</code> + <code>.npz</code> files in <code>cache_dir</code> or <code>cache_input_dir</code>. If no cache exists and an <code>infer_fn</code> is provided, runs Perch inference and writes the cache. In submit mode with <code>require_full_cache_in_submit: true</code>, fails fast if cache is missing.</p>
+<h2 id="5-align-truth-to-cache">5. Align Truth to Cache</h2>
+<p><strong>Function:</strong> <code>pipeline.align_truth_to_cache(full_truth, Y_SC, meta_full)</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>Ground truth DataFrame, label matrix, cached metadata</td>
+</tr>
+<tr>
+<td>Output</td>
+<td><code>Y_FULL</code> array aligned to cache row order</td>
+</tr>
+</tbody>
+</table>
+<p>Reorders ground truth rows to match the cached metadata ordering. Asserts filename and row_id alignment.</p>
+<h2 id="6-oof-meta-features">6. OOF Meta-Features</h2>
+<p><strong>Function:</strong> <code>pipeline.load_or_compute_oof_meta(...)</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>Raw Perch scores, metadata, labels, fusion config</td>
+</tr>
+<tr>
+<td>Output</td>
+<td><code>oof_base</code>, <code>oof_prior</code> arrays, <code>oof_fold_id</code> per-row fold assignments</td>
+</tr>
+</tbody>
+</table>
+<p>Builds honest out-of-fold base and prior meta-features via <code>build_oof_base_prior</code>. Results are cached to <code>full_oof_meta_features.npz</code>.</p>
+<h2 id="7-protossm-training">7. ProtoSSM Training</h2>
+<p><strong>Module:</strong> <code>src/training/trainer.py</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>Perch embeddings, logits, multi-hot labels, site/hour metadata</td>
+</tr>
+<tr>
+<td>Output</td>
+<td>Trained <code>ProtoSSMv2</code> model weights</td>
+</tr>
+</tbody>
+</table>
+<p>Trains the selective SSM on cached Perch embeddings. Uses AdamW + SWA, focal loss + distillation loss + prototype margin loss, mixup augmentation, and early stopping.</p>
+<h2 id="8-protossm-inference">8. ProtoSSM Inference</h2>
+<p><strong>Module:</strong> <code>src/models/proto_ssm.py</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>Test embeddings <code>(N_test, 12, 1536)</code>, Perch logits, site/hour IDs</td>
+</tr>
+<tr>
+<td>Output</td>
+<td>Per-window species scores <code>(N_test, 12, 234)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Forward pass through the trained model. Gated fusion blends SSM logits with Perch logits using learnable per-class alpha.</p>
+<h2 id="9-mlp-probes">9. MLP Probes</h2>
+<p><strong>Module:</strong> <code>src/training/probes.py</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>PCA-reduced embeddings, per-class labels</td>
+</tr>
+<tr>
+<td>Output</td>
+<td>Per-class probe predictions blended at weight <code>probe.alpha</code></td>
+</tr>
+</tbody>
+</table>
+<p>Trains one MLP (or logistic) probe per eligible class (classes with <code>&gt;= min_pos</code> positive examples). Provides independent per-class scores that complement the SSM.</p>
+<h2 id="10-residual-ssm-optional">10. Residual SSM (Optional)</h2>
+<p><strong>Module:</strong> <code>src/models/residual_ssm.py</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>First-pass scores + embeddings</td>
+</tr>
+<tr>
+<td>Output</td>
+<td>Additive corrections blended at <code>residual_ssm.correction_weight</code></td>
+</tr>
+</tbody>
+</table>
+<p>Second-pass correction head. Skipped if <code>timer.remaining() &lt; residual_ssm_min_remaining</code>.</p>
+<h2 id="11-score-fusion-and-calibration">11. Score Fusion and Calibration</h2>
+<p><strong>Modules:</strong> <code>src/scoring/fusion.py</code>, <code>src/scoring/calibration.py</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>All score streams, prior tables, temperature config</td>
+</tr>
+<tr>
+<td>Output</td>
+<td>Final calibrated probabilities <code>(N_test * 12, 234)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Fuses event-level and texture-level score streams with configurable lambdas and temporal smoothing. Applies per-class temperature scaling and top-k filtering.</p>
+<h2 id="12-submission">12. Submission</h2>
+<p><strong>Module:</strong> <code>src/submission/generate.py</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>Calibrated probabilities, <code>sample_submission.csv</code> template</td>
+</tr>
+<tr>
+<td>Output</td>
+<td><code>submission.csv</code></td>
+</tr>
+</tbody>
+</table>
+<p>Writes final predictions in competition format. Applies <code>file_level_top_k</code> filtering (default: keep top 2 species per file).</p>
+<h2 id="class-temperature">Class Temperature</h2>
+<p><strong>Function:</strong> <code>pipeline.build_class_temperatures(PRIMARY_LABELS, CLASS_NAME_MAP, temp_cfg)</code></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>Label list, class name mapping, temperature config</td>
+</tr>
+<tr>
+<td>Output</td>
+<td>Per-class temperature vector <code>(234,)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Assigns <code>temperature.aves</code> (1.10) to bird classes and <code>temperature.texture</code> (0.95) to texture taxa (Amphibia, Insecta).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

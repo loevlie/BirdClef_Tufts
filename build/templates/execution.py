@@ -217,6 +217,92 @@ for cls_idx in PROBE_CLASS_IDX:
 print(f"MLP probes: {len(probe_models)}")
 timer.stage_end()
 
+# --- ResidualSSM (second-pass correction) ---
+res_model = None
+CORRECTION_WEIGHT = 0.0
+res_cfg = CFG.get("residual_ssm", {})
+timer_cfg = CFG.get("timer", {})
+
+if not timer.should_skip("residual_ssm", timer_cfg.get("residual_ssm_min_remaining", 60.0)):
+    timer.stage_start("residual_ssm")
+    try:
+        # SelectiveSSM, nn, F already available from earlier cells
+
+        # First-pass scores on training data
+        model.eval()
+        with torch.no_grad():
+            proto_train_out, _, _ = model(
+                torch.tensor(emb_files, dtype=torch.float32),
+                torch.tensor(logits_files, dtype=torch.float32),
+                site_ids=torch.tensor(site_ids_all, dtype=torch.long),
+                hours=torch.tensor(hours_all, dtype=torch.long),
+            )
+            proto_train_scores = proto_train_out.numpy()
+
+        first_pass_probs = 1.0 / (1.0 + np.exp(-proto_train_scores))
+        residuals = labels_files.astype(np.float32) - first_pass_probs
+
+        res_model = ResidualSSM(
+            d_input=emb_files.shape[2], d_scores=N_CLASSES,
+            d_model=res_cfg.get("d_model", 64), d_state=res_cfg.get("d_state", 8),
+            n_classes=N_CLASSES, n_windows=N_WINDOWS,
+            dropout=res_cfg.get("dropout", 0.1),
+            n_sites=ssm_cfg.get("n_sites", 20), meta_dim=8,
+        )
+        print(f"ResidualSSM parameters: {sum(p.numel() for p in res_model.parameters()):,}")
+
+        # Train/val split
+        n_res = len(emb_files)
+        perm = torch.randperm(n_res, generator=torch.Generator().manual_seed(42))
+        n_val = max(1, int(n_res * 0.2))
+        val_i, train_i = perm[:n_val].numpy(), perm[n_val:].numpy()
+
+        optimizer = torch.optim.AdamW(res_model.parameters(), lr=res_cfg.get("lr", 1e-3), weight_decay=1e-3)
+        best_val_loss, best_state, wait = float("inf"), None, 0
+
+        for epoch in range(res_cfg.get("n_epochs", 20)):
+            res_model.train()
+            emb_tr = torch.tensor(emb_files[train_i], dtype=torch.float32)
+            fp_tr = torch.tensor(proto_train_scores[train_i], dtype=torch.float32)
+            res_tr = torch.tensor(residuals[train_i], dtype=torch.float32)
+            site_tr = torch.tensor(site_ids_all[train_i], dtype=torch.long)
+            hour_tr = torch.tensor(hours_all[train_i], dtype=torch.long)
+
+            correction = res_model(emb_tr, fp_tr, site_ids=site_tr, hours=hour_tr)
+            loss = F.mse_loss(correction, res_tr)
+            optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(res_model.parameters(), 1.0)
+            optimizer.step()
+
+            res_model.eval()
+            with torch.no_grad():
+                emb_va = torch.tensor(emb_files[val_i], dtype=torch.float32)
+                fp_va = torch.tensor(proto_train_scores[val_i], dtype=torch.float32)
+                res_va = torch.tensor(residuals[val_i], dtype=torch.float32)
+                val_corr = res_model(emb_va, fp_va,
+                    site_ids=torch.tensor(site_ids_all[val_i], dtype=torch.long),
+                    hours=torch.tensor(hours_all[val_i], dtype=torch.long))
+                val_loss = F.mse_loss(val_corr, res_va)
+
+            if val_loss.item() < best_val_loss:
+                best_val_loss = val_loss.item()
+                best_state = {k: v.clone() for k, v in res_model.state_dict().items()}
+                wait = 0
+            else:
+                wait += 1
+            if wait >= res_cfg.get("patience", 8):
+                break
+
+        if best_state is not None:
+            res_model.load_state_dict(best_state)
+        CORRECTION_WEIGHT = res_cfg.get("correction_weight", 0.3)
+        print(f"ResidualSSM trained. correction_weight={CORRECTION_WEIGHT}")
+    except Exception as e:
+        print(f"ResidualSSM failed: {e}")
+        res_model = None
+    timer.stage_end()
+
 # --- Test inference ---
 timer.stage_start("test_inference")
 test_paths = sorted((BASE / "test_soundscapes").glob("*.ogg"))
@@ -232,20 +318,29 @@ meta_test, scores_test_raw, emb_test = infer_perch_onnx(
     proxy_reduce=CFG.get("pipeline", {}).get("proxy_reduce", "max"),
 )
 
-# ProtoSSM inference
+# ProtoSSM inference with TTA
 emb_test_files, test_file_list = reshape_to_files(emb_test, meta_test)
 logits_test_files, _ = reshape_to_files(scores_test_raw, meta_test)
 test_site_ids, test_hours = get_file_metadata(meta_test, test_file_list, site_to_idx, n_sites_cfg)
 
 model.eval()
-with torch.no_grad():
-    proto_out, _, _ = model(
-        torch.tensor(emb_test_files, dtype=torch.float32),
-        torch.tensor(logits_test_files, dtype=torch.float32),
-        site_ids=torch.tensor(test_site_ids, dtype=torch.long),
-        hours=torch.tensor(test_hours, dtype=torch.long),
+tta_shifts = CFG.get("tta_shifts", [0])
+if len(tta_shifts) > 1:
+    print(f"Running TTA with shifts: {tta_shifts}")
+    proto_scores = temporal_shift_tta(
+        emb_test_files, logits_test_files, model,
+        test_site_ids, test_hours, shifts=tta_shifts,
     )
-proto_scores_flat = proto_out.reshape(-1, N_CLASSES).numpy().astype(np.float32)
+else:
+    with torch.no_grad():
+        proto_out, _, _ = model(
+            torch.tensor(emb_test_files, dtype=torch.float32),
+            torch.tensor(logits_test_files, dtype=torch.float32),
+            site_ids=torch.tensor(test_site_ids, dtype=torch.long),
+            hours=torch.tensor(test_hours, dtype=torch.long),
+        )
+        proto_scores = proto_out.numpy()
+proto_scores_flat = proto_scores.reshape(-1, N_CLASSES).astype(np.float32)
 
 # Prior-fused base scores
 test_base_scores, test_prior_scores = fuse_scores_with_tables(
@@ -265,6 +360,19 @@ for cls_idx, clf in probe_models.items():
     else:
         pred = clf.decision_function(X_cls_test).astype(np.float32)
     mlp_scores[:, cls_idx] = (1.0 - alpha_probe) * test_base_scores[:, cls_idx] + alpha_probe * pred
+
+# ResidualSSM correction on test
+if res_model is not None and CORRECTION_WEIGHT > 0:
+    res_model.eval()
+    with torch.no_grad():
+        test_correction = res_model(
+            torch.tensor(emb_test_files, dtype=torch.float32),
+            torch.tensor(proto_scores.reshape(len(emb_test_files), N_WINDOWS, N_CLASSES), dtype=torch.float32),
+            site_ids=torch.tensor(test_site_ids, dtype=torch.long),
+            hours=torch.tensor(test_hours, dtype=torch.long),
+        ).numpy()
+    proto_scores_flat = proto_scores_flat + CORRECTION_WEIGHT * test_correction.reshape(-1, N_CLASSES)
+    print(f"Applied ResidualSSM correction (weight={CORRECTION_WEIGHT})")
 
 # Ensemble
 ENSEMBLE_WEIGHT_PROTO = 0.5

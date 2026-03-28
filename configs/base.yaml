@@ -12,7 +12,7 @@ paths:
 
 # ─── Pipeline control ────────────────────────────────────────────────────────
 pipeline:
-  batch_files: 32               # number of audio files per embedding batch
+  batch_files: 8                # number of audio files per embedding batch (8 for ONNX memory safety)
   proxy_reduce: max             # reduction over proxy scores ("max" or "mean")
   require_full_cache_in_submit: true   # fail fast if cache is incomplete at submit time
   verbose: false                # extra logging

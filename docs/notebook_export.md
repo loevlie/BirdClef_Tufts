@@ -24,19 +24,21 @@ Output lands in `build/output/submission.ipynb` by default. Use `-o` to override
 
 After exporting, go to Kaggle → New Notebook → File → Upload Notebook → select `build/output/submission.ipynb`.
 
-Then add these **required inputs** via the "Add Input" sidebar:
+Then add these inputs via the "Add Input" sidebar:
 
 | Type | What to search | What to select |
 |------|---------------|----------------|
 | Competition | `birdclef-2026` | BirdCLEF+ 2026 |
 | Model | `google/bird-vocalization-classifier` | **Perch** by Google → tensorflow2 / perch_v2_cpu / V1 |
+| Dataset | `dennyloevlie/birdclef2026-pipeline-inputs` | BirdCLEF 2026 Pipeline Inputs |
 | Notebook | `tf-wheels ashok205` | **tf_wheels** (1 upvote, by ashok205) |
 
-Optional (saves ~5 min by skipping Perch inference on train data):
+The **Pipeline Inputs** dataset contains everything in one package:
+- Pre-computed Perch embeddings (skips ~5 min training inference)
+- ONNX Perch model (3x faster test inference)
+- Perch labels.csv (species mapping)
 
-| Type | What to search | What to select |
-|------|---------------|----------------|
-| Notebook | Your previous run | Any notebook output with `perch_cache/` files |
+The notebook auto-detects what's available and prints an **INPUT VERIFICATION** table at the top so you can confirm.
 
 Then set **Internet → Off**, **Accelerator → None (CPU)**, and submit.
 

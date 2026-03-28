@@ -12,24 +12,75 @@ MODEL_DIR = Path("/kaggle/input/models/google/bird-vocalization-classifier/tenso
 CACHE_WORK_DIR = Path("/kaggle/working/perch_cache")
 CACHE_WORK_DIR.mkdir(parents=True, exist_ok=True)
 
-# Auto-discover cache from any attached input (dataset or notebook output)
+# --- Verify inputs ---
+print("=" * 50)
+print("  INPUT VERIFICATION")
+print("=" * 50)
+
+# Auto-discover Perch cache
+PIPELINE_INPUT = Path("/kaggle/input/birdclef2026-pipeline-inputs")  # combined dataset
 CACHE_INPUT_DIR = None
 for candidate in [
+    PIPELINE_INPUT,
+    Path("/kaggle/input/birdclef2026-perch-cache"),
     Path("/kaggle/input/perch-meta"),
     *[Path(p).parent for p in glob.glob("/kaggle/input/*/full_perch_arrays.npz")],
-    *[Path(p).parent for p in glob.glob("/kaggle/input/*/*/perch_cache/full_perch_arrays.npz")],
     *[Path(p).parent for p in glob.glob("/kaggle/input/*/perch_cache/full_perch_arrays.npz")],
+    *[Path(p).parent for p in glob.glob("/kaggle/input/*/*/perch_cache/full_perch_arrays.npz")],
 ]:
     if (candidate / "full_perch_arrays.npz").exists() and (candidate / "full_perch_meta.parquet").exists():
         CACHE_INPUT_DIR = candidate
-        print(f"Found Perch cache at: {CACHE_INPUT_DIR}")
         break
-if CACHE_INPUT_DIR is None:
-    CACHE_INPUT_DIR = Path("/kaggle/input/perch-meta")  # fallback
-    print("No pre-computed Perch cache found -- will compute from scratch.")
 
-import tensorflow as tf
-tf.get_logger().setLevel("ERROR")
+checks = {
+    "Competition data": BASE.exists(),
+    "Perch model": MODEL_DIR.exists(),
+    "Perch cache": CACHE_INPUT_DIR is not None,
+}
+for name, ok in checks.items():
+    status = "FOUND" if ok else "MISSING"
+    print(f"  {name}: {status}")
+if CACHE_INPUT_DIR:
+    print(f"    -> {CACHE_INPUT_DIR}")
+else:
+    CACHE_INPUT_DIR = Path("/kaggle/input/perch-meta")
+    print("    -> Will compute from scratch (slower)")
+print("=" * 50)
+
+# --- Load ONNX for test inference (3x faster than TF) ---
+# Auto-discover ONNX model
+ONNX_PATH = None
+for candidate in [
+    str(PIPELINE_INPUT / "perch_v2.onnx"),
+    *glob.glob("/kaggle/input/*/perch_v2.onnx"),
+    *glob.glob("/kaggle/input/*/*/perch_v2.onnx"),
+]:
+    if Path(candidate).exists():
+        ONNX_PATH = candidate
+        break
+
+USE_ONNX = False
+onnx_session = None
+infer_fn = None
+
+if ONNX_PATH:
+    try:
+        import onnxruntime as ort
+        opts = ort.SessionOptions()
+        opts.inter_op_num_threads = 4
+        opts.intra_op_num_threads = 4
+        onnx_session = ort.InferenceSession(ONNX_PATH, opts, providers=["CPUExecutionProvider"])
+        USE_ONNX = True
+        print(f"Using ONNX Perch ({ONNX_PATH})")
+    except Exception as e:
+        print(f"ONNX failed ({e}), falling back to TF")
+
+if not USE_ONNX:
+    import tensorflow as tf
+    tf.get_logger().setLevel("ERROR")
+    birdclassifier = tf.saved_model.load(str(MODEL_DIR))
+    infer_fn = birdclassifier.signatures["serving_default"]
+    print("Using TensorFlow Perch")
 
 timer = WallTimer(budget_seconds=CFG.get("timer", {}).get("budget_seconds", 5400.0))
 
@@ -49,20 +100,14 @@ timer.stage_start("perch_mapping")
 mapping = build_perch_mapping(taxonomy, str(MODEL_DIR), PRIMARY_LABELS, Y_SC, label_to_idx)
 timer.stage_end()
 
-# --- Load Perch model ---
-timer.stage_start("perch_load")
-birdclassifier = tf.saved_model.load(str(MODEL_DIR))
-infer_fn = birdclassifier.signatures["serving_default"]
-timer.stage_end()
-
-# --- Load or compute cache ---
+# --- Load or compute training cache ---
 timer.stage_start("cache")
 meta_full, scores_full_raw, emb_full = load_or_compute_cache(
     full_files, str(BASE), str(CACHE_WORK_DIR), str(CACHE_INPUT_DIR),
     mapping, CFG.get("pipeline", {}), infer_fn,
 )
 Y_FULL = align_truth_to_cache(full_truth, Y_SC, meta_full)
-print(f"Cached: {meta_full.shape[0]} windows, emb: {emb_full.shape}")
+print(f"Training data: {meta_full.shape[0]} windows, emb: {emb_full.shape}")
 timer.stage_end()
 
 # --- OOF meta-features ---
@@ -179,13 +224,22 @@ if len(test_paths) == 0:
     print("No test files. Dry-run on train soundscapes.")
     test_paths = sorted((BASE / "train_soundscapes").glob("*.ogg"))[:CFG.get("pipeline", {}).get("dryrun_n_files", 20)]
 
-meta_test, scores_test_raw, emb_test = infer_perch_with_embeddings(
-    test_paths, infer_fn=infer_fn, n_classes=N_CLASSES,
-    mapped_pos=mapping["MAPPED_POS"], mapped_bc_indices=mapping["MAPPED_BC_INDICES"],
-    proxy_pos_to_bc=mapping.get("selected_proxy_pos_to_bc"),
-    batch_files=CFG.get("pipeline", {}).get("batch_files", 32), verbose=True,
-    proxy_reduce=CFG.get("pipeline", {}).get("proxy_reduce", "max"),
-)
+if USE_ONNX:
+    meta_test, scores_test_raw, emb_test = infer_perch_onnx(
+        test_paths, session=onnx_session, n_classes=N_CLASSES,
+        mapped_pos=mapping["MAPPED_POS"], mapped_bc_indices=mapping["MAPPED_BC_INDICES"],
+        proxy_pos_to_bc=mapping.get("selected_proxy_pos_to_bc"),
+        batch_files=CFG.get("pipeline", {}).get("batch_files", 32), verbose=True,
+        proxy_reduce=CFG.get("pipeline", {}).get("proxy_reduce", "max"),
+    )
+else:
+    meta_test, scores_test_raw, emb_test = infer_perch_with_embeddings(
+        test_paths, infer_fn=infer_fn, n_classes=N_CLASSES,
+        mapped_pos=mapping["MAPPED_POS"], mapped_bc_indices=mapping["MAPPED_BC_INDICES"],
+        proxy_pos_to_bc=mapping.get("selected_proxy_pos_to_bc"),
+        batch_files=CFG.get("pipeline", {}).get("batch_files", 32), verbose=True,
+        proxy_reduce=CFG.get("pipeline", {}).get("proxy_reduce", "max"),
+    )
 
 # ProtoSSM inference
 emb_test_files, test_file_list = reshape_to_files(emb_test, meta_test)

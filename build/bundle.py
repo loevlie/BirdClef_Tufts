@@ -34,6 +34,7 @@ MODULE_GROUPS = [
     ("Inference", [
         "src/inference/audio.py",
         "src/inference/perch.py",
+        "src/inference/perch_onnx.py",
         "src/inference/tta.py",
     ]),
     ("Pipeline", [

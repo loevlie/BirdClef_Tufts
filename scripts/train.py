@@ -243,7 +243,7 @@ def main():
             n_sites=ssm_cfg.get("n_sites", 20),
             meta_dim=ssm_cfg.get("meta_dim", 16),
         )
-        ssl_model.load_state_dict(torch.load(args.ssl_weights, weights_only=True))
+        ssl_model.load_state_dict(torch.load(args.ssl_weights, weights_only=True, map_location="cpu"))
         model = transfer_weights_to_proto_ssm(ssl_model, model)
         del ssl_model
 

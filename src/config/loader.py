@@ -47,12 +47,31 @@ def _resolve_type(cls, field_name: str):
 
 
 def _build_dataclass(cls, data: Dict[str, Any]):
-    """Instantiate a dataclass from a (possibly nested) dict."""
+    """Instantiate a dataclass from a (possibly nested) dict.
+
+    Handles the reverse mapping from YAML keys (e.g. "proto_ssm")
+    to dataclass field names (e.g. "arch") via Config._SECTION_KEYS.
+    """
+    # Build reverse key map: YAML key -> field name
+    reverse_map: Dict[str, str] = {}
+    if hasattr(cls, "_SECTION_KEYS"):
+        for field_name, yaml_key in cls._SECTION_KEYS.items():
+            reverse_map[yaml_key] = field_name
+
     kwargs: Dict[str, Any] = {}
     for fld in dataclasses.fields(cls):
-        if fld.name not in data:
+        # Try field name first, then check if a YAML alias exists
+        if fld.name in data:
+            val = data[fld.name]
+        elif fld.name in reverse_map.values():
+            # Find the YAML key that maps to this field
+            yaml_key = next((k for k, v in reverse_map.items() if v == fld.name), None)
+            if yaml_key and yaml_key in data:
+                val = data[yaml_key]
+            else:
+                continue
+        else:
             continue
-        val = data[fld.name]
         if isinstance(val, dict):
             resolved = _resolve_type(cls, fld.name)
             if resolved is not None and dataclasses.is_dataclass(resolved):

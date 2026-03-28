@@ -134,9 +134,16 @@ def main():
             _cfg = copy.deepcopy(cfg_dict)
             t = _cfg.get("proto_ssm_train", {})
             for k in ["lr", "weight_decay", "distill_weight", "label_smoothing",
-                       "mixup_alpha", "focal_gamma", "swa_start_frac", "pos_weight_cap"]:
+                       "mixup_alpha", "focal_gamma", "swa_start_frac", "pos_weight_cap",
+                       "n_epochs"]:
                 if k in config:
                     t[k] = float(config[k])
+            if "n_epochs" in config:
+                t["n_epochs"] = int(config["n_epochs"])
+
+            # Residual SSM correction weight
+            if "correction_weight" in config:
+                _cfg.setdefault("residual_ssm", {})["correction_weight"] = float(config["correction_weight"])
 
             _a = ssm_cfg  # architecture LOCKED
 

@@ -75,7 +75,7 @@ temperature:
 
 # ─── Inference ───────────────────────────────────────────────────────────────
 file_level_top_k: 2             # keep top-k species per file
-tta_shifts: [0]                 # test-time augmentation shifts (seconds)
+tta_shifts: [0, 1, -1]          # test-time augmentation shifts (3 passes)
 
 # ─── Probe (linear / MLP fallback classifier) ────────────────────────────────
 probe:
@@ -97,7 +97,7 @@ probe:
 # ─── Timer / budget ─────────────────────────────────────────────────────────
 timer:
   budget_seconds: 5400.0              # 90 min Kaggle wall-clock limit
-  residual_ssm_min_remaining: 240.0   # skip residual SSM if less time remains
+  residual_ssm_min_remaining: 60.0    # skip residual SSM only if <1 min left
 
 # ─── neuropt search configuration ────────────────────────────────────────────
 neuropt:
@@ -110,6 +110,8 @@ neuropt:
     focal_gamma:      {type: uniform, low: 1.0, high: 3.0}
     swa_start_frac:   {type: uniform, low: 0.6, high: 0.85}
     pos_weight_cap:   {type: uniform, low: 20.0, high: 45.0}
+    n_epochs:         {type: uniform, low: 35, high: 80}
+    correction_weight: {type: uniform, low: 0.1, high: 0.5}
   batch_size: 3                 # parallel evaluations per neuropt round
   max_evals: 60                 # maximum total evaluations
   backend: claude               # neuropt backend ("claude")

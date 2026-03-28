@@ -12,6 +12,10 @@ def apply_neuropt_config(cfg_dict: dict, nc: dict):
               "mixup_alpha", "focal_gamma", "swa_start_frac", "pos_weight_cap"]:
         if k in nc:
             t[k] = float(nc[k])
+    if "n_epochs" in nc:
+        t["n_epochs"] = int(nc["n_epochs"])
+    if "correction_weight" in nc:
+        cfg_dict.setdefault("residual_ssm", {})["correction_weight"] = float(nc["correction_weight"])
     temp = cfg_dict.get("temperature", {})
     if "temperature_aves" in nc:
         temp["aves"] = float(nc["temperature_aves"])

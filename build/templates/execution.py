@@ -8,7 +8,6 @@ _WALL_START = time.time()
 from pathlib import Path
 import glob
 BASE = Path("/kaggle/input/competitions/birdclef-2026")
-MODEL_DIR = Path("/kaggle/input/models/google/bird-vocalization-classifier/tensorflow2/perch_v2_cpu/1")
 CACHE_WORK_DIR = Path("/kaggle/working/perch_cache")
 CACHE_WORK_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -36,8 +35,8 @@ for candidate in [
 LABELS_CSV = None
 for candidate in [
     PIPELINE_INPUT / "labels.csv",
-    MODEL_DIR / "assets" / "labels.csv",
     *[Path(p) for p in glob.glob("/kaggle/input/*/labels.csv")],
+    *[Path(p) for p in glob.glob("/kaggle/input/*/assets/labels.csv")],
 ]:
     if candidate.exists():
         LABELS_CSV = str(candidate)
@@ -45,7 +44,7 @@ for candidate in [
 
 checks = {
     "Competition data": BASE.exists(),
-    "Perch labels.csv": LABELS_CSV is not None,
+    "labels.csv": LABELS_CSV is not None,
     "Perch cache": CACHE_INPUT_DIR is not None,
     "ONNX model": ONNX_PATH is not None,
 }
@@ -71,33 +70,14 @@ for candidate in [
         ONNX_PATH = candidate
         break
 
-USE_ONNX = False
-onnx_session = None
-infer_fn = None
-
-if ONNX_PATH:
-    try:
-        import onnxruntime as ort
-        opts = ort.SessionOptions()
-        opts.inter_op_num_threads = 4
-        opts.intra_op_num_threads = 4
-        onnx_session = ort.InferenceSession(ONNX_PATH, opts, providers=["CPUExecutionProvider"])
-        USE_ONNX = True
-        print(f"Using ONNX Perch ({ONNX_PATH})")
-    except Exception as e:
-        print(f"ONNX failed ({e}), falling back to TF")
-
-if not USE_ONNX:
-    # TF only needed if no ONNX available
-    try:
-        import tensorflow as tf
-        tf.get_logger().setLevel("ERROR")
-        birdclassifier = tf.saved_model.load(str(MODEL_DIR))
-        infer_fn = birdclassifier.signatures["serving_default"]
-        print("Using TensorFlow Perch")
-    except Exception as e:
-        print(f"TF Perch not available ({e}). Cache required for training data.")
-        infer_fn = None
+import onnxruntime as ort
+assert ONNX_PATH is not None, "ONNX model not found! Attach dennyloevlie/birdclef2026-pipeline-inputs dataset."
+opts = ort.SessionOptions()
+opts.inter_op_num_threads = 4
+opts.intra_op_num_threads = 4
+onnx_session = ort.InferenceSession(ONNX_PATH, opts, providers=["CPUExecutionProvider"])
+print(f"Loaded ONNX Perch: {ONNX_PATH}")
+infer_fn = None  # not using TF
 
 timer = WallTimer(budget_seconds=CFG.get("timer", {}).get("budget_seconds", 5400.0))
 
@@ -114,7 +94,7 @@ timer.stage_end()
 
 # --- Perch mapping ---
 timer.stage_start("perch_mapping")
-mapping = build_perch_mapping(taxonomy, str(MODEL_DIR), PRIMARY_LABELS, Y_SC, label_to_idx,
+mapping = build_perch_mapping(taxonomy, ".", PRIMARY_LABELS, Y_SC, label_to_idx,
                              labels_csv_path=LABELS_CSV)
 timer.stage_end()
 
@@ -242,22 +222,13 @@ if len(test_paths) == 0:
     print("No test files. Dry-run on train soundscapes.")
     test_paths = sorted((BASE / "train_soundscapes").glob("*.ogg"))[:CFG.get("pipeline", {}).get("dryrun_n_files", 20)]
 
-if USE_ONNX:
-    meta_test, scores_test_raw, emb_test = infer_perch_onnx(
-        test_paths, session=onnx_session, n_classes=N_CLASSES,
-        mapped_pos=mapping["MAPPED_POS"], mapped_bc_indices=mapping["MAPPED_BC_INDICES"],
-        proxy_pos_to_bc=mapping.get("selected_proxy_pos_to_bc"),
-        batch_files=CFG.get("pipeline", {}).get("batch_files", 32), verbose=True,
-        proxy_reduce=CFG.get("pipeline", {}).get("proxy_reduce", "max"),
-    )
-else:
-    meta_test, scores_test_raw, emb_test = infer_perch_with_embeddings(
-        test_paths, infer_fn=infer_fn, n_classes=N_CLASSES,
-        mapped_pos=mapping["MAPPED_POS"], mapped_bc_indices=mapping["MAPPED_BC_INDICES"],
-        proxy_pos_to_bc=mapping.get("selected_proxy_pos_to_bc"),
-        batch_files=CFG.get("pipeline", {}).get("batch_files", 32), verbose=True,
-        proxy_reduce=CFG.get("pipeline", {}).get("proxy_reduce", "max"),
-    )
+meta_test, scores_test_raw, emb_test = infer_perch_onnx(
+    test_paths, session=onnx_session, n_classes=N_CLASSES,
+    mapped_pos=mapping["MAPPED_POS"], mapped_bc_indices=mapping["MAPPED_BC_INDICES"],
+    proxy_pos_to_bc=mapping.get("selected_proxy_pos_to_bc"),
+    batch_files=CFG.get("pipeline", {}).get("batch_files", 32), verbose=True,
+    proxy_reduce=CFG.get("pipeline", {}).get("proxy_reduce", "max"),
+)
 
 # ProtoSSM inference
 emb_test_files, test_file_list = reshape_to_files(emb_test, meta_test)

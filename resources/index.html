@@ -568,6 +568,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Datasets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dennyloevliebirdclef2026-pipeline-inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dennyloevlie/birdclef2026-pipeline-inputs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -662,6 +679,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Datasets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dennyloevliebirdclef2026-pipeline-inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dennyloevlie/birdclef2026-pipeline-inputs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -723,7 +757,49 @@
 </tbody>
 </table>
 <h2 id="datasets">Datasets</h2>
-<p><em>Add useful shared datasets here (e.g. pre-computed embeddings, external audio).</em></p>
+<h3 id="dennyloevliebirdclef2026-pipeline-inputs">dennyloevlie/birdclef2026-pipeline-inputs</h3>
+<p>Our combined submission dataset. Only input needed besides the competition data. Contains:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Source</th>
+<th>Credit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>perch_v2.onnx</code></td>
+<td><a href="https://huggingface.co/justinchuby/Perch-onnx">justinchuby/Perch-onnx</a></td>
+<td>Justin Chuby (ONNX conversion), Google (original Perch v2 model)</td>
+</tr>
+<tr>
+<td><code>labels.csv</code></td>
+<td><a href="https://www.kaggle.com/models/google/bird-vocalization-classifier">google/bird-vocalization-classifier</a></td>
+<td>Google</td>
+</tr>
+<tr>
+<td><code>full_perch_arrays.npz</code></td>
+<td>Computed locally from train soundscapes</td>
+<td>Us</td>
+</tr>
+<tr>
+<td><code>full_perch_meta.parquet</code></td>
+<td>Computed locally from train soundscapes</td>
+<td>Us</td>
+</tr>
+<tr>
+<td><code>full_oof_meta_features.npz</code></td>
+<td>Computed locally (5-fold OOF)</td>
+<td>Us</td>
+</tr>
+<tr>
+<td><code>onnxruntime-*.whl</code></td>
+<td><a href="https://pypi.org/project/onnxruntime/">PyPI</a></td>
+<td>Microsoft (ONNX Runtime)</td>
+</tr>
+</tbody>
+</table>
 
 
 

@@ -12,7 +12,19 @@ CACHE_WORK_DIR = Path("/kaggle/working/perch_cache")
 CACHE_WORK_DIR.mkdir(parents=True, exist_ok=True)
 
 # --- Discover all inputs ---
-PIPELINE_INPUT = Path("/kaggle/input/birdclef2026-pipeline-inputs")
+# Check both possible dataset mount paths
+PIPELINE_INPUT = None
+for candidate in [
+    Path("/kaggle/input/birdclef2026-pipeline-inputs"),
+    Path("/kaggle/input/datasets/dennyloevlie/birdclef2026-pipeline-inputs"),
+    *[Path(p) for p in glob.glob("/kaggle/input/datasets/*/birdclef2026*")],
+    *[Path(p) for p in glob.glob("/kaggle/input/birdclef2026*")],
+]:
+    if candidate.exists():
+        PIPELINE_INPUT = candidate
+        break
+if PIPELINE_INPUT is None:
+    PIPELINE_INPUT = Path("/kaggle/input/birdclef2026-pipeline-inputs")  # fallback
 
 # Perch cache
 CACHE_INPUT_DIR = None

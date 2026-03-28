@@ -134,16 +134,17 @@ def main():
             _cfg = copy.deepcopy(cfg_dict)
             t = _cfg.get("proto_ssm_train", {})
             for k in ["lr", "weight_decay", "distill_weight", "label_smoothing",
-                       "mixup_alpha", "focal_gamma", "swa_start_frac", "pos_weight_cap",
-                       "n_epochs"]:
+                       "mixup_alpha", "focal_gamma", "swa_start_frac", "pos_weight_cap"]:
                 if k in config:
                     t[k] = float(config[k])
-            if "n_epochs" in config:
-                t["n_epochs"] = int(config["n_epochs"])
 
-            # Residual SSM correction weight
-            if "correction_weight" in config:
-                _cfg.setdefault("residual_ssm", {})["correction_weight"] = float(config["correction_weight"])
+            # n_epochs and correction_weight: neuropt may not always suggest these,
+            # so fill in from config if missing, or use random if not provided at all
+            import random
+            t["n_epochs"] = int(config.get("n_epochs", random.randint(35, 80)))
+            _cfg.setdefault("residual_ssm", {})["correction_weight"] = float(
+                config.get("correction_weight", random.uniform(0.1, 0.5))
+            )
 
             _a = ssm_cfg  # architecture LOCKED
 

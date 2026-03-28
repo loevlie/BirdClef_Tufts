@@ -383,6 +383,20 @@ CLASS_NAME_MAP = taxonomy.set_index("primary_label")["class_name"].to_dict()
 class_temperatures = build_class_temperatures(PRIMARY_LABELS, CLASS_NAME_MAP, CFG.get("temperature", {}))
 probs = apply_temperature_and_scale(final_test_scores, class_temperatures, n_windows=N_WINDOWS, top_k=CFG.get("file_level_top_k", 2))
 
+# Rank-aware scaling
+if CFG.get("rank_aware_scale", False):
+    power = CFG.get("rank_aware_power", 0.5)
+    print(f"Applying rank-aware scaling (power={power})")
+    probs = rank_aware_scaling(probs, n_windows=N_WINDOWS, power=power)
+    probs = np.clip(probs, 0.0, 1.0)
+
+# Adaptive delta-shift smoothing
+delta_alpha = CFG.get("delta_shift_alpha", 0.0)
+if delta_alpha > 0:
+    print(f"Applying adaptive delta-shift smoothing (alpha={delta_alpha})")
+    probs = adaptive_delta_smooth(probs, n_windows=N_WINDOWS, base_alpha=delta_alpha)
+    probs = np.clip(probs, 0.0, 1.0)
+
 # Submission
 submission = build_submission(probs, meta_test, PRIMARY_LABELS, test_paths, n_windows=N_WINDOWS)
 submission.to_csv("submission.csv", index=False)

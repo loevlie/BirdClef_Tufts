@@ -26,7 +26,9 @@ MODULE_GROUPS = [
     ]),
     ("Training", [
         "src/training/losses.py",
+        "src/training/species_focal.py",
         "src/training/augmentation.py",
+        "src/training/cutmix.py",
         "src/training/trainer.py",
         "src/training/oof.py",
         "src/training/probes.py",
@@ -44,6 +46,7 @@ MODULE_GROUPS = [
         "src/scoring/priors.py",
         "src/scoring/fusion.py",
         "src/scoring/calibration.py",
+        "src/scoring/postprocessing.py",
     ]),
     ("Submission", [
         "src/submission/generate.py",

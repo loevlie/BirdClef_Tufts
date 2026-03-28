@@ -17,4 +17,15 @@ Competition discussions, notebooks, and resources worth tracking.
 
 ## Datasets
 
-_Add useful shared datasets here (e.g. pre-computed embeddings, external audio)._
+### dennyloevlie/birdclef2026-pipeline-inputs
+
+Our combined submission dataset. Only input needed besides the competition data. Contains:
+
+| File | Source | Credit |
+|------|--------|--------|
+| `perch_v2.onnx` | [justinchuby/Perch-onnx](https://huggingface.co/justinchuby/Perch-onnx) | Justin Chuby (ONNX conversion), Google (original Perch v2 model) |
+| `labels.csv` | [google/bird-vocalization-classifier](https://www.kaggle.com/models/google/bird-vocalization-classifier) | Google |
+| `full_perch_arrays.npz` | Computed locally from train soundscapes | Us |
+| `full_perch_meta.parquet` | Computed locally from train soundscapes | Us |
+| `full_oof_meta_features.npz` | Computed locally (5-fold OOF) | Us |
+| `onnxruntime-*.whl` | [PyPI](https://pypi.org/project/onnxruntime/) | Microsoft (ONNX Runtime) |

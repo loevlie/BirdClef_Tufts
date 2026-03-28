@@ -11,11 +11,13 @@ from build.bundle import bundle_notebook, validate_notebook
 
 TF_INSTALL = '''# Install onnxruntime from bundled wheel (no internet needed)
 import glob
-_whl = glob.glob("/kaggle/input/*/onnxruntime*.whl")
+_whl = (glob.glob("/kaggle/input/*/onnxruntime*.whl")
+      + glob.glob("/kaggle/input/*/*/onnxruntime*.whl")
+      + glob.glob("/kaggle/input/*/*/*/onnxruntime*.whl"))
 if _whl:
     !pip install -q {_whl[0]}
 else:
-    !pip install -q onnxruntime  # fallback if internet available
+    !pip install -q onnxruntime
 '''
 
 

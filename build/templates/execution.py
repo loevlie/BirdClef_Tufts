@@ -11,13 +11,10 @@ BASE = Path("/kaggle/input/competitions/birdclef-2026")
 CACHE_WORK_DIR = Path("/kaggle/working/perch_cache")
 CACHE_WORK_DIR.mkdir(parents=True, exist_ok=True)
 
-# --- Verify inputs ---
-print("=" * 50)
-print("  INPUT VERIFICATION")
-print("=" * 50)
+# --- Discover all inputs ---
+PIPELINE_INPUT = Path("/kaggle/input/birdclef2026-pipeline-inputs")
 
-# Auto-discover Perch cache
-PIPELINE_INPUT = Path("/kaggle/input/birdclef2026-pipeline-inputs")  # combined dataset
+# Perch cache
 CACHE_INPUT_DIR = None
 for candidate in [
     PIPELINE_INPUT,
@@ -25,13 +22,12 @@ for candidate in [
     Path("/kaggle/input/perch-meta"),
     *[Path(p).parent for p in glob.glob("/kaggle/input/*/full_perch_arrays.npz")],
     *[Path(p).parent for p in glob.glob("/kaggle/input/*/perch_cache/full_perch_arrays.npz")],
-    *[Path(p).parent for p in glob.glob("/kaggle/input/*/*/perch_cache/full_perch_arrays.npz")],
 ]:
     if (candidate / "full_perch_arrays.npz").exists() and (candidate / "full_perch_meta.parquet").exists():
         CACHE_INPUT_DIR = candidate
         break
 
-# Find labels.csv (from pipeline inputs or Perch model)
+# labels.csv
 LABELS_CSV = None
 for candidate in [
     PIPELINE_INPUT / "labels.csv",
@@ -42,24 +38,7 @@ for candidate in [
         LABELS_CSV = str(candidate)
         break
 
-checks = {
-    "Competition data": BASE.exists(),
-    "labels.csv": LABELS_CSV is not None,
-    "Perch cache": CACHE_INPUT_DIR is not None,
-    "ONNX model": ONNX_PATH is not None,
-}
-for name, ok in checks.items():
-    status = "FOUND" if ok else "MISSING"
-    print(f"  {name}: {status}")
-if CACHE_INPUT_DIR:
-    print(f"    -> {CACHE_INPUT_DIR}")
-else:
-    CACHE_INPUT_DIR = Path("/kaggle/input/perch-meta")
-    print("    -> Will compute from scratch (slower)")
-print("=" * 50)
-
-# --- Load ONNX for test inference (3x faster than TF) ---
-# Auto-discover ONNX model
+# ONNX model
 ONNX_PATH = None
 for candidate in [
     str(PIPELINE_INPUT / "perch_v2.onnx"),
@@ -69,6 +48,17 @@ for candidate in [
     if Path(candidate).exists():
         ONNX_PATH = candidate
         break
+
+# --- Verify ---
+print("=" * 50)
+print("  INPUT VERIFICATION")
+print("=" * 50)
+for name, ok in {"Competition data": BASE.exists(), "labels.csv": LABELS_CSV is not None,
+                 "Perch cache": CACHE_INPUT_DIR is not None, "ONNX model": ONNX_PATH is not None}.items():
+    print(f"  {name}: {'FOUND' if ok else 'MISSING'}")
+if CACHE_INPUT_DIR is None:
+    CACHE_INPUT_DIR = Path("/kaggle/input/perch-meta")
+print("=" * 50)
 
 import onnxruntime as ort
 assert ONNX_PATH is not None, "ONNX model not found! Attach dennyloevlie/birdclef2026-pipeline-inputs dataset."

@@ -85,6 +85,9 @@ def collect_third_party_imports(modules: list[str], root: str = ".") -> list[str
                 # Skip internal imports
                 if "src." in stripped or stripped.startswith("from ."):
                     continue
+                # Skip TF and optional deps (we use ONNX)
+                if "tensorflow" in stripped or "lightgbm" in stripped:
+                    continue
                 imports.add(stripped)
     return sorted(imports)
 

@@ -233,19 +233,10 @@ def main():
 
     # Transfer SSL pretrained weights if provided
     if args.ssl_weights:
-        from src.training.ssl_pretrain import MaskedSSMEncoder, transfer_weights_to_proto_ssm
+        from src.training.ssl_pretrain import transfer_weights_to_proto_ssm
         print(f"  Loading SSL weights from {args.ssl_weights}...")
-        ssl_model = MaskedSSMEncoder(
-            d_input=emb_full.shape[1],
-            d_model=ssm_cfg.get("d_model", 128),
-            d_state=ssm_cfg.get("d_state", 16),
-            n_ssm_layers=ssm_cfg.get("n_ssm_layers", 2),
-            n_sites=ssm_cfg.get("n_sites", 20),
-            meta_dim=ssm_cfg.get("meta_dim", 16),
-        )
-        ssl_model.load_state_dict(torch.load(args.ssl_weights, weights_only=True, map_location="cpu"))
-        model = transfer_weights_to_proto_ssm(ssl_model, model)
-        del ssl_model
+        ssl_state = torch.load(args.ssl_weights, weights_only=True, map_location="cpu")
+        model = transfer_weights_to_proto_ssm(ssl_state, model)
 
     model, train_history = train_proto_ssm_single(
         model,

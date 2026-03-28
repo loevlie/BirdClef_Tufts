@@ -218,22 +218,27 @@ def transfer_weights_to_proto_ssm(ssl_model, proto_ssm_model):
     transferred = 0
     skipped = 0
 
-    ssl_state = ssl_model.state_dict()
+    ssl_state = ssl_model.state_dict() if hasattr(ssl_model, 'state_dict') else ssl_model
     proto_state = proto_ssm_model.state_dict()
 
     for key in ssl_state:
-        # Skip the reconstruction head
-        if "reconstruct_head" in key:
+        # Skip reconstruction head and metadata embeddings
+        if "reconstruct_head" in key or "site_emb" in key or "hour_emb" in key or "meta_proj" in key:
             skipped += 1
             continue
 
         # Map SSL key names to ProtoSSM key names
         proto_key = key
-        # SSM layer naming: ssl has ssm_layers_fwd.0 -> proto has ssm_layers_fwd.0
-        # These should match directly since we used the same naming
+        # SSL: ssm_layers_fwd.0 -> ProtoSSM: ssm_fwd.0
+        proto_key = proto_key.replace("ssm_layers_fwd.", "ssm_fwd.")
+        proto_key = proto_key.replace("ssm_layers_bwd.", "ssm_bwd.")
+        # SSL: ssm_merges/ssm_norms/ssm_drops (plural) -> ProtoSSM: ssm_merge/ssm_norm/ssm_drop
+        proto_key = proto_key.replace("ssm_merges.", "ssm_merge.")
+        proto_key = proto_key.replace("ssm_norms.", "ssm_norm.")
+        proto_key = proto_key.replace("ssm_drops.", "ssm_drop.")
 
         if proto_key in proto_state and ssl_state[key].shape == proto_state[proto_key].shape:
-            proto_state[proto_key] = ssl_state[key]
+            proto_state[proto_key] = ssl_state[key].cpu() if hasattr(ssl_state[key], 'cpu') else ssl_state[key]
             transferred += 1
         else:
             skipped += 1

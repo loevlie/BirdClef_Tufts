@@ -24,21 +24,27 @@ Output lands in `build/output/submission.ipynb` by default. Use `-o` to override
 
 After exporting, go to Kaggle → New Notebook → File → Upload Notebook → select `build/output/submission.ipynb`.
 
-Then add these inputs via the "Add Input" sidebar:
+Then add these **two inputs** via the "Add Input" sidebar:
 
 | Type | What to search | What to select |
 |------|---------------|----------------|
 | Competition | `birdclef-2026` | BirdCLEF+ 2026 |
-| Model | `google/bird-vocalization-classifier` | **Perch** by Google → tensorflow2 / perch_v2_cpu / V1 |
 | Dataset | `dennyloevlie/birdclef2026-pipeline-inputs` | BirdCLEF 2026 Pipeline Inputs |
+
+That's it. The **Pipeline Inputs** dataset contains everything:
+- `labels.csv` -- Perch species mapping
+- `perch_v2.onnx` -- ONNX Perch model (3x faster than TF)
+- `full_perch_arrays.npz` + `full_perch_meta.parquet` -- pre-computed train embeddings
+- `full_oof_meta_features.npz` -- pre-computed OOF features
+
+**Optional** (only needed as TF fallback if ONNX fails):
+
+| Type | What to search | What to select |
+|------|---------------|----------------|
+| Model | `google/bird-vocalization-classifier` | **Perch** by Google → tensorflow2 / perch_v2_cpu / V1 |
 | Notebook | `tf-wheels ashok205` | **tf_wheels** (1 upvote, by ashok205) |
 
-The **Pipeline Inputs** dataset contains everything in one package:
-- Pre-computed Perch embeddings (skips ~5 min training inference)
-- ONNX Perch model (3x faster test inference)
-- Perch labels.csv (species mapping)
-
-The notebook auto-detects what's available and prints an **INPUT VERIFICATION** table at the top so you can confirm.
+The notebook prints an **INPUT VERIFICATION** table at the top so you can confirm everything was detected.
 
 Then set **Internet → Off**, **Accelerator → None (CPU)**, and submit.
 

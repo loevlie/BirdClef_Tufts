@@ -32,10 +32,22 @@ for candidate in [
         CACHE_INPUT_DIR = candidate
         break
 
+# Find labels.csv (from pipeline inputs or Perch model)
+LABELS_CSV = None
+for candidate in [
+    PIPELINE_INPUT / "labels.csv",
+    MODEL_DIR / "assets" / "labels.csv",
+    *[Path(p) for p in glob.glob("/kaggle/input/*/labels.csv")],
+]:
+    if candidate.exists():
+        LABELS_CSV = str(candidate)
+        break
+
 checks = {
     "Competition data": BASE.exists(),
-    "Perch model": MODEL_DIR.exists(),
+    "Perch labels.csv": LABELS_CSV is not None,
     "Perch cache": CACHE_INPUT_DIR is not None,
+    "ONNX model": ONNX_PATH is not None,
 }
 for name, ok in checks.items():
     status = "FOUND" if ok else "MISSING"
@@ -76,11 +88,16 @@ if ONNX_PATH:
         print(f"ONNX failed ({e}), falling back to TF")
 
 if not USE_ONNX:
-    import tensorflow as tf
-    tf.get_logger().setLevel("ERROR")
-    birdclassifier = tf.saved_model.load(str(MODEL_DIR))
-    infer_fn = birdclassifier.signatures["serving_default"]
-    print("Using TensorFlow Perch")
+    # TF only needed if no ONNX available
+    try:
+        import tensorflow as tf
+        tf.get_logger().setLevel("ERROR")
+        birdclassifier = tf.saved_model.load(str(MODEL_DIR))
+        infer_fn = birdclassifier.signatures["serving_default"]
+        print("Using TensorFlow Perch")
+    except Exception as e:
+        print(f"TF Perch not available ({e}). Cache required for training data.")
+        infer_fn = None
 
 timer = WallTimer(budget_seconds=CFG.get("timer", {}).get("budget_seconds", 5400.0))
 
@@ -97,7 +114,8 @@ timer.stage_end()
 
 # --- Perch mapping ---
 timer.stage_start("perch_mapping")
-mapping = build_perch_mapping(taxonomy, str(MODEL_DIR), PRIMARY_LABELS, Y_SC, label_to_idx)
+mapping = build_perch_mapping(taxonomy, str(MODEL_DIR), PRIMARY_LABELS, Y_SC, label_to_idx,
+                             labels_csv_path=LABELS_CSV)
 timer.stage_end()
 
 # --- Load or compute training cache ---

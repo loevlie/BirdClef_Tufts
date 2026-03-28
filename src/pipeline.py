@@ -105,8 +105,14 @@ def prepare_labels(soundscape_labels, PRIMARY_LABELS):
 # 3. Build Perch mapping
 # ---------------------------------------------------------------------------
 
-def build_perch_mapping(taxonomy, model_dir, PRIMARY_LABELS, Y_SC, label_to_idx):
+def build_perch_mapping(taxonomy, model_dir, PRIMARY_LABELS, Y_SC, label_to_idx,
+                        labels_csv_path=None):
     """Build species-to-BirdClassifier mapping arrays and index groups.
+
+    Parameters
+    ----------
+    labels_csv_path : str or Path, optional
+        Direct path to Perch labels.csv. If not provided, looks in model_dir/assets/.
 
     Returns
     -------
@@ -121,10 +127,14 @@ def build_perch_mapping(taxonomy, model_dir, PRIMARY_LABELS, Y_SC, label_to_idx)
         idx_unmapped_inactive,
         fuse_kwargs  (dict ready to pass to fuse_scores_with_tables)
     """
-    model_dir = Path(model_dir)
+    # Find labels.csv
+    if labels_csv_path and Path(labels_csv_path).exists():
+        labels_path = Path(labels_csv_path)
+    else:
+        labels_path = Path(model_dir) / "assets" / "labels.csv"
 
     bc_labels = (
-        pd.read_csv(model_dir / "assets" / "labels.csv")
+        pd.read_csv(labels_path)
         .reset_index()
         .rename(columns={"index": "bc_index", "inat2024_fsd50k": "scientific_name"})
     )

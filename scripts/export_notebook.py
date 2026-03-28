@@ -14,10 +14,8 @@ import glob
 _whl = (glob.glob("/kaggle/input/*/onnxruntime*.whl")
       + glob.glob("/kaggle/input/*/*/onnxruntime*.whl")
       + glob.glob("/kaggle/input/*/*/*/onnxruntime*.whl"))
-if _whl:
-    !pip install -q {_whl[0]}
-else:
-    !pip install -q onnxruntime
+assert _whl, "onnxruntime wheel not found! Attach dennyloevlie/birdclef2026-pipeline-inputs dataset."
+!pip install -q {_whl[0]}
 '''
 
 

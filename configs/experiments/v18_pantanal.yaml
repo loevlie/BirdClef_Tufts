@@ -14,11 +14,11 @@ proto_ssm:
   cross_attn_heads: 8
 
 proto_ssm_train:
-  n_epochs: 80
+  n_epochs: 40
   lr: 8.0e-4
   weight_decay: 1.0e-3
   val_ratio: 0.15
-  patience: 20
+  patience: 8
   pos_weight_cap: 25.0
   distill_weight: 0.15
   proto_margin: 0.15

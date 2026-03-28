@@ -157,7 +157,7 @@ for fi in range(len(file_list)):
     for ci in active:
         file_families[fi, class_to_family[ci]] = 1.0
 
-# --- Train ProtoSSM ---
+# --- Train ProtoSSM (large model from config) ---
 timer.stage_start("proto_ssm_train")
 model = ProtoSSMv2(
     d_input=emb_full.shape[1], d_model=ssm_cfg.get("d_model", 128),
@@ -178,6 +178,34 @@ model, train_history = train_proto_ssm_single(
     site_ids_train=site_ids_all, hours_train=hours_all,
     file_families_train=file_families, cfg=train_cfg, verbose=True,
 )
+print(f"  Large model params: {model.count_parameters():,}")
+timer.stage_end()
+
+# --- Train small ProtoSSM (diversity for ensemble) ---
+timer.stage_start("proto_ssm_small")
+small_cfg = {"d_model": 128, "d_state": 16, "n_ssm_layers": 2, "dropout": 0.15,
+             "n_prototypes": 1, "n_sites": 20, "meta_dim": 16,
+             "use_cross_attn": True, "cross_attn_heads": 4}
+small_train = {"n_epochs": 35, "lr": 1e-3, "weight_decay": 9e-4, "patience": 15,
+               "pos_weight_cap": 36.0, "distill_weight": 0.16, "label_smoothing": 0.031,
+               "mixup_alpha": 0.28, "focal_gamma": 2.3, "swa_start_frac": 0.73, "swa_lr": 5e-4,
+               "proto_margin": 0.1, "val_ratio": 0.15}
+model_small = ProtoSSMv2(
+    d_input=emb_full.shape[1], d_model=128, d_state=16, n_ssm_layers=2,
+    n_classes=N_CLASSES, n_windows=N_WINDOWS, dropout=0.15,
+    n_sites=n_sites_cfg, meta_dim=16, use_cross_attn=True, cross_attn_heads=4,
+)
+model_small.init_prototypes_from_data(
+    torch.tensor(emb_full, dtype=torch.float32),
+    torch.tensor(Y_FULL, dtype=torch.float32),
+)
+model_small.init_family_head(n_families, class_to_family)
+model_small, _ = train_proto_ssm_single(
+    model_small, emb_files, logits_files, labels_files.astype(np.float32),
+    site_ids_train=site_ids_all, hours_train=hours_all,
+    file_families_train=file_families, cfg=small_train, verbose=True,
+)
+print(f"  Small model params: {model_small.count_parameters():,}")
 timer.stage_end()
 
 # --- Train MLP probes ---
@@ -323,23 +351,26 @@ emb_test_files, test_file_list = reshape_to_files(emb_test, meta_test)
 logits_test_files, _ = reshape_to_files(scores_test_raw, meta_test)
 test_site_ids, test_hours = get_file_metadata(meta_test, test_file_list, site_to_idx, n_sites_cfg)
 
-model.eval()
+# Inference: blend large + small ProtoSSM with TTA
 tta_shifts = CFG.get("tta_shifts", [0])
-if len(tta_shifts) > 1:
-    print(f"Running TTA with shifts: {tta_shifts}")
-    proto_scores = temporal_shift_tta(
-        emb_test_files, logits_test_files, model,
-        test_site_ids, test_hours, shifts=tta_shifts,
-    )
-else:
+DUAL_BLEND = 0.6  # 60% large, 40% small
+
+def _infer_model(m, shifts):
+    m.eval()
+    if len(shifts) > 1:
+        return temporal_shift_tta(emb_test_files, logits_test_files, m,
+                                  test_site_ids, test_hours, shifts=shifts)
     with torch.no_grad():
-        proto_out, _, _ = model(
-            torch.tensor(emb_test_files, dtype=torch.float32),
-            torch.tensor(logits_test_files, dtype=torch.float32),
-            site_ids=torch.tensor(test_site_ids, dtype=torch.long),
-            hours=torch.tensor(test_hours, dtype=torch.long),
-        )
-        proto_scores = proto_out.numpy()
+        out, _, _ = m(torch.tensor(emb_test_files, dtype=torch.float32),
+                      torch.tensor(logits_test_files, dtype=torch.float32),
+                      site_ids=torch.tensor(test_site_ids, dtype=torch.long),
+                      hours=torch.tensor(test_hours, dtype=torch.long))
+        return out.numpy()
+
+print(f"Running dual-model TTA (shifts={tta_shifts}, blend={DUAL_BLEND:.0%} large + {1-DUAL_BLEND:.0%} small)")
+scores_large = _infer_model(model, tta_shifts)
+scores_small = _infer_model(model_small, tta_shifts)
+proto_scores = DUAL_BLEND * scores_large + (1 - DUAL_BLEND) * scores_small
 proto_scores_flat = proto_scores.reshape(-1, N_CLASSES).astype(np.float32)
 
 # Prior-fused base scores

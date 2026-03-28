@@ -261,14 +261,16 @@ def main():
             "pos_weight_cap": {"type": "uniform", "low": 20.0, "high": 45.0},
         }
 
+    n_search_params = len(search_space_cfg)
     ml_context = (
         f"BirdCLEF 2026 ProtoSSM v4. Arch LOCKED (d_model={ssm_cfg.get('d_model', 128)}, "
         f"{ssm_cfg.get('n_ssm_layers', 2)} layers). "
         f"{n_splits_cv}-FOLD CV validation (honest, no leakage). "
         f"BASELINE {n_splits_cv}-fold AUC = {baseline_score:.4f}. "
-        f"Only searching 8 TRAINING params. Post-processing is FIXED. "
+        f"Searching {n_search_params} params: {', '.join(sorted(search_space_cfg.keys()))}. "
         f"~{len(file_list)} files, {len(file_list)*N_WINDOWS} windows, {N_CLASSES} species. "
-        f"{n_splits_cv}-fold CV takes ~45s/eval. "
+        f"n_epochs: number of training epochs (integer, higher = longer training). "
+        f"correction_weight: weight for ResidualSSM second-pass correction (0=no correction). "
         f"focal_gamma: higher = more focus on hard examples. "
         f"mixup_alpha: file-level augmentation. distill_weight: Perch logit distillation. "
         f"swa_start_frac: when to start weight averaging (fraction of training). "

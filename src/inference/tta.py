@@ -1,36 +1,42 @@
 """Temporal-shift test-time augmentation for ProtoSSM."""
 
+import gc
+
 import numpy as np
 import torch
 
 
 def temporal_shift_tta(emb_files, logits_files, model, site_ids, hours, shifts=[0, 1, -1]):
     """TTA by circular-shifting the 12-window embedding sequence.
-    Averages predictions from shifted versions for more robust output."""
-    all_preds = []
+    Averages predictions from shifted versions for more robust output.
+    Memory-efficient: accumulates running mean instead of storing all preds."""
     model.eval()
+    running_sum = None
+
+    site_t = torch.tensor(site_ids, dtype=torch.long)
+    hour_t = torch.tensor(hours, dtype=torch.long)
 
     for shift in shifts:
         if shift == 0:
-            e = emb_files
-            l = logits_files
+            e = torch.tensor(emb_files, dtype=torch.float32)
+            l = torch.tensor(logits_files, dtype=torch.float32)
         else:
-            e = np.roll(emb_files, shift, axis=1)
-            l = np.roll(logits_files, shift, axis=1)
+            e = torch.tensor(np.roll(emb_files, shift, axis=1), dtype=torch.float32)
+            l = torch.tensor(np.roll(logits_files, shift, axis=1), dtype=torch.float32)
 
         with torch.no_grad():
-            out, _, _ = model(
-                torch.tensor(e, dtype=torch.float32),
-                torch.tensor(l, dtype=torch.float32),
-                site_ids=torch.tensor(site_ids, dtype=torch.long),
-                hours=torch.tensor(hours, dtype=torch.long),
-            )
+            out, _, _ = model(e, l, site_ids=site_t, hours=hour_t)
             pred = out.numpy()
 
-        # Reverse the shift on predictions
+        del e, l, out
+        gc.collect()
+
         if shift != 0:
             pred = np.roll(pred, -shift, axis=1)
 
-        all_preds.append(pred)
+        if running_sum is None:
+            running_sum = pred
+        else:
+            running_sum += pred
 
-    return np.mean(all_preds, axis=0)
+    return running_sum / len(shifts)

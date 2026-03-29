@@ -46,7 +46,7 @@ residual_ssm:
   lr: 8.0e-4
   patience: 12
 
-tta_shifts: [0, 1, -1, 2, -2]
+tta_shifts: [0, 1, -1]
 file_level_top_k: 2
 rank_aware_scale: true
 rank_aware_power: 0.4

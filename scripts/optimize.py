@@ -137,6 +137,8 @@ def main():
             for k, v in config.items():
                 if k == "n_epochs":
                     t["n_epochs"] = int(round(float(v)))
+                elif k == "patience":
+                    t["patience"] = int(round(float(v)))
                 elif k == "correction_weight":
                     _cfg.setdefault("residual_ssm", {})["correction_weight"] = float(v)
                 elif k in t:

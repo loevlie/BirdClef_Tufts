@@ -208,8 +208,11 @@ def validate(model, loader, mel_transform):
 # ── Main ──
 t_start = time.time()
 
-# Train/val split (stratified by species)
+# Train/val split — duplicate single-sample species so stratify works
 from sklearn.model_selection import train_test_split
+counts = train_csv["primary_label"].value_counts()
+singletons = counts[counts < 2].index
+train_csv = pd.concat([train_csv, train_csv[train_csv["primary_label"].isin(singletons)]], ignore_index=True)
 train_df, val_df = train_test_split(train_csv, test_size=0.1, stratify=train_csv["primary_label"], random_state=42)
 print(f"Train: {len(train_df)}, Val: {len(val_df)}")
 
